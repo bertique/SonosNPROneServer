@@ -11,6 +11,9 @@ release.properties
 .project
 .classpath
 
+# Ignore auto generated classes from WSDL
+src/main/java/com/sonos/
+
 # =========================
 # Operating System Files
 # =========================
@@ -44,9 +47,3 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
