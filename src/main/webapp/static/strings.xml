@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<stringtables xmlns="http://sonos.com/sonosapi">
+    <stringtable rev="1" xml:lang="en-US">
+        <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="1" xml:lang="de-DE">
+              <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="1" xml:lang="fr-FR">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="1" xml:lang="it-IT">
+               <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="0" xml:lang="es-ES">
+               <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="0" xml:lang="sv-SE">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="0" xml:lang="nl-NL">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="0" xml:lang="ja-JP">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+    <stringtable rev="0" xml:lang="zh-CN">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+        <stringtable rev="0" xml:lang="da-DK">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+        <stringtable rev="0" xml:lang="pt-BR">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+        <stringtable rev="0" xml:lang="nb-NO">
+                <string stringId="ServicePromo">Connect NPR One to your Sonos. Comments or questions email b.michael.dick@gmail.com.</string>
+		<string stringId="RATE_UP">Interesting!</string>
+		<string stringId="SUCCESS_UP">Got it!</string>
+		<string stringId="RATE_DOWN">Not Interesting!</string>
+		<string stringId="SUCCESS_DOWN">Got it!</string>							
+        <string stringId="Error1Message">Custom Login Error string.</string>
+    	<string stringId="Error2Message">Custom Unsupported Operation error string.</string>
+    </stringtable>
+</stringtables>
