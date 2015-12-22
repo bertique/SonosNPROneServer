@@ -9,8 +9,8 @@ Check out the instructions at [http://michaeldick.me/sonos-nprone/](http://micha
 # How do I run the service myself?
 
 ## Prerequsists
-* [NPR One app registration](dev.npr.org)
-* [Heroku account (or similar)](heroku.com)
+* [NPR One app registration](http://dev.npr.org)
+* [Heroku account (or similar)](https://heroku.com)
 
 ## Run the service locally
 * Clone this repo
