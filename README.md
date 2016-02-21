@@ -8,7 +8,7 @@ Check out the instructions at [http://michaeldick.me/sonos-nprone/](http://micha
 
 # How do I run the service myself?
 
-## Prerequsists
+## Prerequisites
 * [NPR One app registration](http://dev.npr.org)
 * [Heroku account (or similar)](https://heroku.com)
 
