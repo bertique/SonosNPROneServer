@@ -174,7 +174,6 @@ public class SonosService implements SonosSoap {
     	KEEN_WRITE_KEY = conf.getProperty("KEEN_WRITE_KEY", System.getenv("KEEN_WRITE_KEY"));
     	initializeCaches(); 
     	initializeMetrics();
-    	java.util.logging.Logger jlogger = new java.util.logging.Logger();
     }
     
     public SonosService () {
@@ -653,7 +652,7 @@ public class SonosService implements SonosSoap {
 	public GetMetadataResponse getMetadata(GetMetadata parameters)
 			throws CustomFault {
 		logger.debug("getMetadata id:"+parameters.getId()+" count:"+parameters.getCount()+" index:"+parameters.getIndex());
-		throwSoapFault("test");
+		
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
 			throwSoapFault(SESSION_INVALID);
