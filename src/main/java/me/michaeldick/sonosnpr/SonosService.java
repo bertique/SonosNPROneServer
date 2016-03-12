@@ -148,7 +148,8 @@ public class SonosService implements SonosSoap {
     private static Cache<String, List<Rating>> RatingCache;    
     private static Cache<String, List<AbstractMedia>> LastResponseToPlayer;
 
-    
+    // Disable severe log message for SoapFault
+    private static java.util.logging.Logger COM_ROOT_LOGGER = java.util.logging.Logger.getLogger("com.sun.xml.internal.messaging.saaj.soap.ver1_1");
     private static Logger logger = Logger.getLogger(SonosService.class.getSimpleName());
     private static KeenClient client;
     
@@ -174,6 +175,8 @@ public class SonosService implements SonosSoap {
     	KEEN_WRITE_KEY = conf.getProperty("KEEN_WRITE_KEY", System.getenv("KEEN_WRITE_KEY"));
     	initializeCaches(); 
     	initializeMetrics();
+    	
+    	COM_ROOT_LOGGER.setLevel(java.util.logging.Level.OFF);
     }
     
     public SonosService () {
@@ -189,6 +192,8 @@ public class SonosService implements SonosSoap {
     	NPR_CLIENT_SECRET = System.getenv("NPR_CLIENT_SECRET");
     	initializeCaches();
     	initializeMetrics();
+    	
+    	COM_ROOT_LOGGER.setLevel(java.util.logging.Level.OFF);
     }
     
     private void initializeCaches() {
@@ -617,7 +622,7 @@ public class SonosService implements SonosSoap {
 	public GetMediaMetadataResponse getMediaMetadata(GetMediaMetadata parameters)
 			throws CustomFault {
 		logger.debug("getMediaMetadata id:"+parameters.getId());
-		
+
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
 			throwSoapFault(SESSION_INVALID);
@@ -652,7 +657,7 @@ public class SonosService implements SonosSoap {
 	public GetMetadataResponse getMetadata(GetMetadata parameters)
 			throws CustomFault {
 		logger.debug("getMetadata id:"+parameters.getId()+" count:"+parameters.getCount()+" index:"+parameters.getIndex());
-		
+
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
 			throwSoapFault(SESSION_INVALID);
