@@ -174,6 +174,7 @@ public class SonosService implements SonosSoap {
     	KEEN_WRITE_KEY = conf.getProperty("KEEN_WRITE_KEY", System.getenv("KEEN_WRITE_KEY"));
     	initializeCaches(); 
     	initializeMetrics();
+    	java.util.logging.Logger jlogger = new java.util.logging.Logger();
     }
     
     public SonosService () {
@@ -221,7 +222,7 @@ public class SonosService implements SonosSoap {
     
 	@Override
 	public String getScrollIndices(String id) throws CustomFault {
-		logger.info("getScrollIndices id:"+id);
+		logger.debug("getScrollIndices id:"+id);
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -229,7 +230,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public AddToContainerResult addToContainer(String id, String parentId,
 			int index, String updateId) throws CustomFault {
-		logger.info("addToContainer");
+		logger.debug("addToContainer");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -237,7 +238,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public GetExtendedMetadataResponse getExtendedMetadata(
 			GetExtendedMetadata parameters) throws CustomFault {
-		logger.info("getExtendedMetadata id:"+parameters.getId());
+		logger.debug("getExtendedMetadata id:"+parameters.getId());
 
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -274,7 +275,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public ReportPlaySecondsResult reportPlaySeconds(String id, int seconds)
 			throws CustomFault {
-		logger.info("reportPlaySeconds id:"+id+" seconds:"+seconds);
+		logger.debug("reportPlaySeconds id:"+id+" seconds:"+seconds);
 		if(seconds == 0) {
 			Credentials creds = getCredentialsFromHeaders();
 			if(creds == null)
@@ -319,13 +320,13 @@ public class SonosService implements SonosSoap {
 	@Override
 	public void reportStatus(String id, int errorCode, String message)
 			throws CustomFault {
-		logger.info("reportStatus");
+		logger.debug("reportStatus");
 		// TODO Auto-generated method stub		
 	}
 
 	@Override
 	public RateItemResponse rateItem(RateItem parameters) throws CustomFault {
-		logger.info("rateItem id:"+parameters.getId()+" rating:"+parameters.getRating());
+		logger.debug("rateItem id:"+parameters.getId()+" rating:"+parameters.getRating());
 
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -377,7 +378,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public void reportAccountAction(String type) throws CustomFault {
-		logger.info("reportAccountAction");
+		logger.debug("reportAccountAction");
 		// TODO Auto-generated method stub
 
 	}
@@ -385,7 +386,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public GetExtendedMetadataTextResponse getExtendedMetadataText(
 			GetExtendedMetadataText parameters) throws CustomFault {
-		logger.info("getExtendedMetadataText id:"+parameters.getId());
+		logger.debug("getExtendedMetadataText id:"+parameters.getId());
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -393,7 +394,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public RenameContainerResult renameContainer(String id, String title)
 			throws CustomFault {
-		logger.info("renameContainer");
+		logger.debug("renameContainer");
 		// TODO Auto-generated method stub
 		
 		return null;
@@ -401,7 +402,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public void setPlayedSeconds(String id, int seconds) throws CustomFault {
-		logger.info("setPlayedSeconds id:"+id+" sec:"+seconds);
+		logger.debug("setPlayedSeconds id:"+id+" sec:"+seconds);
 
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -428,7 +429,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public LastUpdate getLastUpdate() throws CustomFault {
-		logger.info("getLastUpdate");
+		logger.debug("getLastUpdate");
 	
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -453,7 +454,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public DeviceLinkCodeResult getDeviceLinkCode(String householdId)
 			throws CustomFault {
-		logger.info("getDeviceLinkCode");
+		logger.debug("getDeviceLinkCode");
 
 		Map<String, Object> event = new HashMap<String, Object>();
         event.put("userid", householdId);
@@ -478,12 +479,13 @@ public class SonosService implements SonosSoap {
 					.request(MediaType.APPLICATION_JSON_TYPE)
 					.post(Entity.form(form), String.class);
 			client.close();
-		} catch (NotAuthorizedException e) {
-			logger.debug("login NotAuthorized: "+e.getMessage());
+		} catch (NotAuthorizedException e) {			
+			logger.info(householdId.hashCode() +": login NotAuthorized");
+			logger.debug(householdId.hashCode() +": "+e.getMessage());
 			throwSoapFault(LOGIN_INVALID);
 		} catch (BadRequestException e) {
-			logger.debug("Bad request: "+e.getMessage());
-			logger.debug(e.getResponse().readEntity(String.class));
+			logger.error("Bad request: "+e.getMessage());
+			logger.error(e.getResponse().readEntity(String.class));
 			throwSoapFault(SERVICE_UNKNOWN_ERROR);
 		}
 		
@@ -497,7 +499,7 @@ public class SonosService implements SonosSoap {
             verification_uri = root.get("verification_uri").getAsString();
             user_code = root.get("user_code").getAsString();
             device_code = root.get("device_code").getAsString();
-            logger.debug("Got verification uri");
+            logger.info(householdId.hashCode() +": Got verification uri");
         }
 		    
         DeviceLinkCodeResult response = new DeviceLinkCodeResult();
@@ -510,7 +512,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public void deleteItem(String favorite) throws CustomFault {
-		logger.info("deleteItem");
+		logger.debug("deleteItem");
 		// TODO Auto-generated method stub
 
 	}
@@ -518,7 +520,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public DeviceAuthTokenResult getDeviceAuthToken(String householdId,
 			String linkCode, String linkDeviceId) throws CustomFault {
-		logger.info("getDeviceAuthToken");
+		logger.debug("getDeviceAuthToken");
 		
 		Form form = new Form();
 		form.param("client_id", NPR_CLIENT_ID);				
@@ -534,11 +536,12 @@ public class SonosService implements SonosSoap {
 					.post(Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED_TYPE), String.class);
 			client.close();
 		} catch (NotAuthorizedException e) {
-			logger.debug("Not linked retry: "+e.getMessage());
-			logger.debug("Detailed response: "+e.getResponse().readEntity(String.class));
+			logger.info(householdId.hashCode() +": Not linked retry");
+			logger.debug(householdId.hashCode() +": "+e.getMessage());
+			logger.debug(householdId.hashCode() +": Detailed response: "+e.getResponse().readEntity(String.class));
 			throwSoapFault(NOT_LINKED_RETRY, "NOT_LINKED_RETRY", "5");
 		} catch (BadRequestException e) {
-			logger.debug("Bad request: "+e.getMessage());
+			logger.error("Bad request: "+e.getMessage());
 			throwSoapFault(NOT_LINKED_FAILURE, "NOT_LINKED_FAILURE", "6");
 		}
 		
@@ -548,7 +551,7 @@ public class SonosService implements SonosSoap {
         if (element.isJsonObject()) {
         	JsonObject root = element.getAsJsonObject();
         	access_token = root.get("access_token").getAsString();            
-            logger.debug("Got token");
+            logger.info(householdId.hashCode() +": Got token");
         }
 		    
         DeviceAuthTokenResult response = new DeviceAuthTokenResult();
@@ -560,7 +563,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public CreateContainerResult createContainer(String containerType,
 			String title, String parentId, String seedId) throws CustomFault {
-		logger.info("createContainer");
+		logger.debug("createContainer");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -568,7 +571,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public ReorderContainerResult reorderContainer(String id, String from,
 			int to, String updateId) throws CustomFault {
-		logger.info("reorderContainer");
+		logger.debug("reorderContainer");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -576,7 +579,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public SegmentMetadataList getStreamingMetadata(String id,
 			XMLGregorianCalendar startTime, int duration) throws CustomFault {
-		logger.info("getStreamingMetadata");
+		logger.debug("getStreamingMetadata");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -585,7 +588,7 @@ public class SonosService implements SonosSoap {
 	public void getMediaURI(String id, Holder<String> getMediaURIResult,
 			Holder<HttpHeaders> httpHeaders, Holder<Integer> uriTimeout)
 			throws CustomFault {
-		logger.info("getMediaURI id:"+id);
+		logger.debug("getMediaURI id:"+id);
 		
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -614,7 +617,7 @@ public class SonosService implements SonosSoap {
 	@Override
 	public GetMediaMetadataResponse getMediaMetadata(GetMediaMetadata parameters)
 			throws CustomFault {
-		logger.info("getMediaMetadata id:"+parameters.getId());
+		logger.debug("getMediaMetadata id:"+parameters.getId());
 		
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -649,8 +652,8 @@ public class SonosService implements SonosSoap {
 	@Override
 	public GetMetadataResponse getMetadata(GetMetadata parameters)
 			throws CustomFault {
-		logger.info("getMetadata id:"+parameters.getId()+" count:"+parameters.getCount()+" index:"+parameters.getIndex());
-		
+		logger.debug("getMetadata id:"+parameters.getId()+" count:"+parameters.getCount()+" index:"+parameters.getIndex());
+		throwSoapFault("test");
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
 			throwSoapFault(SESSION_INVALID);
@@ -665,8 +668,9 @@ public class SonosService implements SonosSoap {
         // Add it to the "purchases" collection in your Keen Project.
         KeenClient.client().addEvent("purchases", event);
 		
-		if(parameters.getId().equals("root")) {
-			GetMetadataResponse response = new GetMetadataResponse();
+        GetMetadataResponse response = new GetMetadataResponse();
+        
+		if(parameters.getId().equals("root")) {			
 			MediaList ml = new MediaList();
 			List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();
 //			For now just a generic name (should display station name eventually)
@@ -690,16 +694,11 @@ public class SonosService implements SonosSoap {
 			ml.setTotal(mcList.size());
 			ml.setIndex(0);
 			response.setGetMetadataResult(ml);
-			
-			return response;			
+						
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.DEFAULT) && parameters.getCount() > 0) {
-			GetMetadataResponse response = new GetMetadataResponse();
 			response.setGetMetadataResult(getProgram(userId, auth));
-			return response;
-		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.SUGGESTIONS)) {
-			GetMetadataResponse response = new GetMetadataResponse();
+		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.SUGGESTIONS)) {			
 			response.setGetMetadataResult(getSuggestions(userId, auth));
-			return response;
 		} else if(parameters.getId().startsWith(SonosService.PODCAST)) {
 			MediaList ml = getProgram(userId, auth);
 			Media m = ListeningResponseCache.getIfPresent(userId+parameters.getId().replaceAll(SonosService.PODCAST+":", ""));
@@ -707,16 +706,11 @@ public class SonosService implements SonosSoap {
 				ml.getMediaCollectionOrMediaMetadata().add(0, buildMMD(m));			
 				ml.setCount(ml.getCount()+1);
 				ml.setTotal(ml.getTotal()+1);
-			}
-			GetMetadataResponse response = new GetMetadataResponse();
+			}			
 			response.setGetMetadataResult(ml);
-			return response;
-		} else if(parameters.getId().startsWith(SonosService.AGGREGATION)) {
-			GetMetadataResponse response = new GetMetadataResponse();
+		} else if(parameters.getId().startsWith(SonosService.AGGREGATION)) {			
 			response.setGetMetadataResult(getAggregation(parameters.getId().replaceAll(SonosService.AGGREGATION+":",""), userId, auth));
-			return response;
-		} else if(parameters.getId().equals(ItemType.SEARCH.value())) {
-			GetMetadataResponse response = new GetMetadataResponse();
+		} else if(parameters.getId().equals(ItemType.SEARCH.value())) {			
 			MediaList ml = new MediaList();
 			List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();
 			
@@ -729,19 +723,20 @@ public class SonosService implements SonosSoap {
 			ml.setCount(mcList.size());
 			ml.setTotal(mcList.size());
 			ml.setIndex(0);
-			response.setGetMetadataResult(ml);
-			
-			return response;
+			response.setGetMetadataResult(ml);							
+		} else {
+			return null;
 		}
 		
-		return null;
+		logger.info(userId.hashCode() + ": Got Metadata for "+parameters.getId()+", "+response.getGetMetadataResult().getCount());
+		return response;
 	}
 
 	// No longer used after switch to oauth
 	@Override
 	public GetSessionIdResponse getSessionId(GetSessionId parameters)
 			throws CustomFault {
-		logger.debug("getSessionId");
+		logger.error("getSessionId (deprecated)");
 		
 		throwSoapFault(AUTH_TOKEN_EXPIRED);
 		
@@ -785,7 +780,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public ContentKey getContentKey(String id, String uri) throws CustomFault {
-		logger.info("getContentKey");
+		logger.debug("getContentKey");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -793,21 +788,21 @@ public class SonosService implements SonosSoap {
 	@Override
 	public RemoveFromContainerResult removeFromContainer(String id,
 			String indices, String updateId) throws CustomFault {
-		logger.info("removeFromContainer");
+		logger.debug("removeFromContainer");
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public DeleteContainerResult deleteContainer(String id) throws CustomFault {
-		logger.info("deleteContainer");
+		logger.debug("deleteContainer");
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void reportPlayStatus(String id, String status) throws CustomFault {
-		logger.info("reportPlayStatus");
+		logger.debug("reportPlayStatus");
 
 		Credentials creds = getCredentialsFromHeaders();
 		if(creds == null)
@@ -837,14 +832,14 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public String createItem(String favorite) throws CustomFault {
-		logger.info("createItem favorite:"+favorite);
+		logger.debug("createItem favorite:"+favorite);
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public SearchResponse search(Search parameters) throws CustomFault {
-		logger.info("search");
+		logger.debug("search");
 		if(parameters.getTerm() == null || parameters.getTerm().length() < 4)
 		{
 			SearchResponse response = new SearchResponse();
@@ -1043,8 +1038,8 @@ public class SonosService implements SonosSoap {
 		} catch (NotAuthorizedException e) {
 			logger.debug("login NotAuthorized: "+e.getMessage());			
 		} catch (BadRequestException e) {
-			logger.debug("Bad request: "+e.getMessage());
-			logger.debug(e.getResponse().readEntity(String.class));
+			logger.error("Bad request: "+e.getMessage());
+			logger.error(e.getResponse().readEntity(String.class));
 		}
 		System.out.println(json);
 	}
