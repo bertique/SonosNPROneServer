@@ -32,6 +32,7 @@ import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.soap.SOAPFaultException;
 
+import me.michaeldick.npr.model.Channel;
 import me.michaeldick.npr.model.Media;
 import me.michaeldick.npr.model.Rating;
 import me.michaeldick.npr.model.RatingsList;
@@ -113,7 +114,7 @@ public class SonosService implements SonosSoap {
 	
 	public static final String PROGRAM = "program";
     public static final String DEFAULT = "default";
-    public static final String SUGGESTIONS = "suggestions";
+    public static final String HISTORY = "history";
     public static final String PODCAST = "podcasts";
     public static final String AGGREGATION = "aggregation";
     public static final String SESSIONIDTOKEN = "###";
@@ -675,35 +676,14 @@ public class SonosService implements SonosSoap {
 		
         GetMetadataResponse response = new GetMetadataResponse();
         
-		if(parameters.getId().equals("root")) {			
-			MediaList ml = new MediaList();
-			List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();
-//			For now just a generic name (should display station name eventually)
-			MediaCollection mc1 = new MediaCollection();			
-			mc1.setTitle("Play NPR One");
-			mc1.setId(SonosService.PROGRAM+":"+SonosService.DEFAULT);
-			mc1.setItemType(ItemType.PROGRAM);
-			mc1.setCanPlay(true);
-			mc1.setCanEnumerate(true);
-			mcList.add(mc1);		
-			
-			MediaCollection mc2 = new MediaCollection();			
-			mc2.setTitle("Suggestions");
-			mc2.setId(SonosService.PROGRAM+":"+SonosService.SUGGESTIONS);
-			mc2.setItemType(ItemType.COLLECTION);
-			mc2.setCanPlay(false);
-			mc2.setCanEnumerate(true);
-			mcList.add(mc2);
-			
-			ml.setCount(mcList.size());
-			ml.setTotal(mcList.size());
-			ml.setIndex(0);
-			response.setGetMetadataResult(ml);
-						
+		if(parameters.getId().equals("root")) {					
+			response.setGetMetadataResult(getChannels(userId, auth));												
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.DEFAULT) && parameters.getCount() > 0) {
 			response.setGetMetadataResult(getProgram(userId, auth));
-		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.SUGGESTIONS)) {			
-			response.setGetMetadataResult(getSuggestions(userId, auth));
+		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.HISTORY)) {			
+			response.setGetMetadataResult(getHistory(userId, auth));
+		} else if(parameters.getId().startsWith(SonosService.PROGRAM)) {			
+			response.setGetMetadataResult(getChannel(userId, auth, parameters.getId().replaceAll(SonosService.PROGRAM+":", "")));		
 		} else if(parameters.getId().startsWith(SonosService.PODCAST)) {
 			MediaList ml = getProgram(userId, auth);
 			Media m = ListeningResponseCache.getIfPresent(userId+parameters.getId().replaceAll(SonosService.PODCAST+":", ""));
@@ -742,6 +722,60 @@ public class SonosService implements SonosSoap {
 		
 		logger.info(logLine);
 		return response;
+	}
+
+	private MediaList getChannels(String userId, String auth) {
+		
+		String json = "";
+		try {
+			Client client = ClientBuilder.newClient();
+			json = client.target(LISTENING_API_URI)
+					.path("channels")							
+					.queryParam("exploreOnly", "true")
+					.request(MediaType.APPLICATION_JSON_TYPE)
+					.header("Authorization", "Bearer " + auth)
+					.get(String.class);
+			client.close();
+		} catch (NotAuthorizedException e) {
+			throwSoapFault(AUTH_TOKEN_EXPIRED);
+		}
+				
+		JsonParser parser = new JsonParser();
+		JsonElement element = parser.parse(json);
+	        
+		JsonArray mainResultList = element.getAsJsonObject().getAsJsonArray("items");			
+		
+		MediaList ml = new MediaList();
+		List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();  
+		
+		MediaCollection mc1 = new MediaCollection();			
+		mc1.setTitle("Play NPR One");
+		mc1.setId(SonosService.PROGRAM+":"+SonosService.DEFAULT);
+		mc1.setItemType(ItemType.PROGRAM);
+		mc1.setCanPlay(true);
+		mc1.setCanEnumerate(true);
+		mcList.add(mc1);
+		
+        if (mainResultList != null) {         	
+            for (int i = 0; i < mainResultList.size(); i++) { 
+            	Channel c = new Channel(mainResultList.get(i).getAsJsonObject());
+	            	if(!c.getId().equals("promo")) {
+	            	MediaCollection mc = new MediaCollection();			
+	        		mc.setTitle(c.getFullName());
+	        		mc.setId(SonosService.PROGRAM+":"+c.getId());
+	        		mc.setItemType(ItemType.COLLECTION);
+	        		mc.setCanPlay(false);
+	        		mc.setCanEnumerate(true);
+	        		mcList.add(mc);		            
+            	}
+			}
+        }
+        
+		ml.setCount(mcList.size());
+		ml.setIndex(0);
+		ml.setTotal(mcList.size());				
+    	logger.debug("Got program list: "+mcList.size());
+    	return ml;
 	}
 
 	// No longer used after switch to oauth
@@ -946,13 +980,30 @@ public class SonosService implements SonosSoap {
     	return ml;                			
 	}
 	
-	private static MediaList getSuggestions(String userId, String auth) {		
+	private static MediaList getChannel(String userId, String auth, String channel) {		
 		String json = "";
 		try {
 			Client client = ClientBuilder.newClient();
 			json = client.target(LISTENING_API_URI)
 					.path("recommendations")								
-					.queryParam("channel", "recommended")
+					.queryParam("channel", channel)
+					.request(MediaType.APPLICATION_JSON_TYPE)
+					.header("Authorization", "Bearer " + auth)
+					.get(String.class);
+			client.close();
+		} catch (NotAuthorizedException e) {
+			throwSoapFault(AUTH_TOKEN_EXPIRED);
+		}
+				
+		return parseMediaListResponse(userId, json);						
+	}
+	
+	private static MediaList getHistory(String userId, String auth) {		
+		String json = "";
+		try {
+			Client client = ClientBuilder.newClient();
+			json = client.target(LISTENING_API_URI)
+					.path("history")	
 					.request(MediaType.APPLICATION_JSON_TYPE)
 					.header("Authorization", "Bearer " + auth)
 					.get(String.class);
