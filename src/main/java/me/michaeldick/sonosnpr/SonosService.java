@@ -610,6 +610,7 @@ public class SonosService implements SonosSoap {
 			else if(m.getAudioLinks().containsKey("audio/aac") && m.getAudioLinks().get("audio/aac").endsWith(".mp3")) {
 				getMediaURIResult.value =  m.getAudioLinks().get("audio/aac");				
 			} else {
+				logger.debug("Item not found");				
 				throwSoapFault(ITEM_NOT_FOUND);
 			}
 		} else {
@@ -732,7 +733,14 @@ public class SonosService implements SonosSoap {
 			return null;
 		}
 		
-		logger.info(userId.hashCode() + ": Got Metadata for "+parameters.getId()+", "+response.getGetMetadataResult().getCount());
+		String logLine = userId.hashCode() + ": Got Metadata for "+parameters.getId()+", "+response.getGetMetadataResult().getCount();
+		logLine += " (";
+		for(AbstractMedia m : response.getGetMetadataResult().getMediaCollectionOrMediaMetadata()) {
+			logLine += m.getId().substring(m.getId().length() - 2) + " ";
+		}
+		logLine += ")";
+		
+		logger.info(logLine);
 		return response;
 	}
 
