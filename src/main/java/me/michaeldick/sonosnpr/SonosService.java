@@ -281,7 +281,7 @@ public class SonosService implements SonosSoap {
 	public ReportPlaySecondsResult reportPlaySeconds(String id, int seconds)
 			throws CustomFault {
 		logger.debug("reportPlaySeconds id:"+id+" seconds:"+seconds);
-		if(seconds == 0) {
+		if(seconds <= 1) {
 			Credentials creds = getCredentialsFromHeaders();
 			if(creds == null)
 				throwSoapFault(SESSION_INVALID);
