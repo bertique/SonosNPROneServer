@@ -32,11 +32,6 @@ import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.soap.SOAPFaultException;
 
-import me.michaeldick.npr.model.Channel;
-import me.michaeldick.npr.model.Media;
-import me.michaeldick.npr.model.Rating;
-import me.michaeldick.npr.model.RatingsList;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.headers.Header;
 import org.apache.cxf.helpers.CastUtils;
@@ -57,6 +52,7 @@ import com.google.gson.JsonParser;
 import com.sonos.services._1.AbstractMedia;
 import com.sonos.services._1.AddToContainerResult;
 import com.sonos.services._1.AlbumArtUrl;
+import com.sonos.services._1.AppLinkResult;
 import com.sonos.services._1.ContentKey;
 import com.sonos.services._1.CreateContainerResult;
 import com.sonos.services._1.Credentials;
@@ -64,6 +60,7 @@ import com.sonos.services._1.DeleteContainerResult;
 import com.sonos.services._1.DeviceAuthTokenResult;
 import com.sonos.services._1.DeviceLinkCodeResult;
 import com.sonos.services._1.DynamicData;
+import com.sonos.services._1.EncryptionContext;
 import com.sonos.services._1.ExtendedMetadata;
 import com.sonos.services._1.GetExtendedMetadata;
 import com.sonos.services._1.GetExtendedMetadataResponse;
@@ -71,7 +68,6 @@ import com.sonos.services._1.GetExtendedMetadataText;
 import com.sonos.services._1.GetExtendedMetadataTextResponse;
 import com.sonos.services._1.GetMediaMetadata;
 import com.sonos.services._1.GetMediaMetadataResponse;
-import com.sonos.services._1.GetMediaMetadataResponse.GetMediaMetadataResult;
 import com.sonos.services._1.GetMetadata;
 import com.sonos.services._1.GetMetadataResponse;
 import com.sonos.services._1.GetSessionId;
@@ -84,6 +80,8 @@ import com.sonos.services._1.LoginToken;
 import com.sonos.services._1.MediaCollection;
 import com.sonos.services._1.MediaList;
 import com.sonos.services._1.MediaMetadata;
+import com.sonos.services._1.MediaUriAction;
+import com.sonos.services._1.PositionInformation;
 import com.sonos.services._1.Property;
 import com.sonos.services._1.RateItem;
 import com.sonos.services._1.RateItemResponse;
@@ -101,6 +99,10 @@ import com.sonos.services._1_1.SonosSoap;
 import io.keen.client.java.JavaKeenClientBuilder;
 import io.keen.client.java.KeenClient;
 import io.keen.client.java.KeenProject;
+import me.michaeldick.npr.model.Channel;
+import me.michaeldick.npr.model.Media;
+import me.michaeldick.npr.model.Rating;
+import me.michaeldick.npr.model.RatingsList;
 
 @WebService
 public class SonosService implements SonosSoap {
@@ -278,8 +280,8 @@ public class SonosService implements SonosSoap {
 	}
 
 	@Override
-	public ReportPlaySecondsResult reportPlaySeconds(String id, int seconds)
-			throws CustomFault {
+	public ReportPlaySecondsResult reportPlaySeconds(String id, int seconds, String contextId, String privateData,
+			Integer offsetMillis) throws CustomFault {
 		logger.debug("reportPlaySeconds id:"+id+" seconds:"+seconds);
 		if(seconds <= 1) {
 			Credentials creds = getCredentialsFromHeaders();
@@ -406,7 +408,8 @@ public class SonosService implements SonosSoap {
 	}
 
 	@Override
-	public void setPlayedSeconds(String id, int seconds) throws CustomFault {
+	public void setPlayedSeconds(String id, int seconds, String contextId, String privateData, Integer offsetMillis)
+			throws CustomFault {
 		logger.debug("setPlayedSeconds id:"+id+" sec:"+seconds);
 
 		Credentials creds = getCredentialsFromHeaders();
@@ -590,9 +593,11 @@ public class SonosService implements SonosSoap {
 	}
 
 	@Override
-	public void getMediaURI(String id, Holder<String> getMediaURIResult,
-			Holder<HttpHeaders> httpHeaders, Holder<Integer> uriTimeout)
-			throws CustomFault {
+	public void getMediaURI(String id, MediaUriAction action, Integer secondsSinceExplicit,
+			Holder<String> deviceSessionToken, Holder<String> getMediaURIResult,
+			Holder<EncryptionContext> deviceSessionKey, Holder<EncryptionContext> contentKey,
+			Holder<HttpHeaders> httpHeaders, Holder<Integer> uriTimeout,
+			Holder<PositionInformation> positionInformation, Holder<String> privateDataFieldName) throws CustomFault {
 		logger.debug("getMediaURI id:"+id);
 		
 		Credentials creds = getCredentialsFromHeaders();
@@ -609,7 +614,8 @@ public class SonosService implements SonosSoap {
 				getMediaURIResult.value = m.getAudioLinks().get("audio/mp3");				
 			}		
 			else if(m.getAudioLinks().containsKey("audio/aac") && m.getAudioLinks().get("audio/aac").endsWith(".mp3")) {
-				getMediaURIResult.value =  m.getAudioLinks().get("audio/aac");				
+				getMediaURIResult.value =  m.getAudioLinks().get("audio/aac");
+				
 			} else {
 				logger.debug("Item not found");				
 				throwSoapFault(ITEM_NOT_FOUND);
@@ -639,15 +645,7 @@ public class SonosService implements SonosSoap {
         if (m != null) {
         	logger.debug("ListeningResponseCache hit");
         	MediaMetadata mmd = buildMMD(m);
-			GetMediaMetadataResult result = new GetMediaMetadataResult();
-			result.setId(mmd.getId());
-			result.setItemType(mmd.getItemType());
-			result.setTrackMetadata(mmd.getTrackMetadata());
-			result.setMimeType(mmd.getMimeType());		
-			result.setTitle(mmd.getTitle());
-			result.setDynamic(mmd.getDynamic());
-			
-			response.setGetMediaMetadataResult(result);
+        	response.setGetMediaMetadataResult(mmd);
 			return response;					
 		}
         
@@ -825,8 +823,7 @@ public class SonosService implements SonosSoap {
 	}
 
 	@Override
-	public ContentKey getContentKey(String id, String uri) throws CustomFault {
-		logger.debug("getContentKey");
+	public ContentKey getContentKey(String id, String uri, String deviceSessionToken) throws CustomFault {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -847,7 +844,7 @@ public class SonosService implements SonosSoap {
 	}
 
 	@Override
-	public void reportPlayStatus(String id, String status) throws CustomFault {
+	public void reportPlayStatus(String id, String status, String contextId, Integer offsetMillis) throws CustomFault {		
 		logger.debug("reportPlayStatus");
 
 		Credentials creds = getCredentialsFromHeaders();
@@ -916,6 +913,13 @@ public class SonosService implements SonosSoap {
 		return response;
 	}
 
+	@Override
+	public AppLinkResult getAppLink(String householdId, String hardware, String osVersion, String sonosAppName,
+			String callbackPath) throws CustomFault {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	// Private methods
 	
 	private static MediaList getProgram(String userId, String auth) {							
@@ -1183,7 +1187,7 @@ public class SonosService implements SonosSoap {
 			}		
 			else if(m.getAudioLinks().containsKey("audio/aac") && m.getAudioLinks().get("audio/aac").endsWith(".mp3")) {				
 				mmd.setMimeType("audio/mp3");
-			}
+			} 			
 			else {
 				logger.debug("No mp3 links found");
 				return null;
