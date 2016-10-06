@@ -6,13 +6,10 @@
 	<artifactId>SonosNPROneServer</artifactId>
 	<version>0.9.5</version>
 	<packaging>war</packaging>
-
 	<name>SonosNPROneServer</name>
 	<url>http://michaeldick.me</url>
-
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
 	</properties>
 	<repositories>
 		<repository>
@@ -24,7 +21,6 @@
 		</repository>
 	</repositories>
 	<dependencies>
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webmvc</artifactId>
@@ -64,13 +60,11 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.3</version>
-
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>18.0</version>
-
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -84,9 +78,14 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-  			<groupId>io.keen</groupId>
-  			<artifactId>keen-client-api-java</artifactId>
-  			<version>2.1.2</version>
+			<groupId>io.keen</groupId>
+			<artifactId>keen-client-api-java</artifactId>
+			<version>2.1.2</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.mixpanel</groupId>
+		    <artifactId>mixpanel-java</artifactId>
+		    <version>1.4.4</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -131,7 +130,6 @@
 						<goals>
 							<goal>run-war</goal>
 						</goals>
-
 					</execution>
 					<execution>
 						<id>tomcat-run</id>
@@ -144,7 +142,6 @@
 							<finalName>${project.artifactId}-war-exec.jar</finalName>
 						</configuration>
 					</execution>
-
 				</executions>
 				<configuration>
 					<path>/</path>
@@ -167,7 +164,7 @@
 						<goals>
 							<goal>copy-dependencies</goal>
 						</goals>
-					</execution>					
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>

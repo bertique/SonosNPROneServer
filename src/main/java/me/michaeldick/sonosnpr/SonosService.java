@@ -1,5 +1,6 @@
 package me.michaeldick.sonosnpr;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,6 +40,7 @@ import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.jaxws.context.WrappedMessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.w3c.dom.Node;
 
 import com.google.common.cache.Cache;
@@ -104,6 +106,10 @@ import me.michaeldick.npr.model.Media;
 import me.michaeldick.npr.model.Rating;
 import me.michaeldick.npr.model.RatingsList;
 
+import com.mixpanel.mixpanelapi.ClientDelivery;
+import com.mixpanel.mixpanelapi.MessageBuilder;
+import com.mixpanel.mixpanelapi.MixpanelAPI;
+
 @WebService
 public class SonosService implements SonosSoap {
 
@@ -113,6 +119,8 @@ public class SonosService implements SonosSoap {
 	public static String KEEN_PROJECT_ID = "";
 	public static String KEEN_WRITE_KEY = "";
 	public static String KEEN_READ_KEY = "";			
+	
+	public static String MIXPANEL_PROJECT_TOKEN = "";
 	
 	public static final String PROGRAM = "program";
     public static final String DEFAULT = "default";
@@ -155,6 +163,7 @@ public class SonosService implements SonosSoap {
     private static java.util.logging.Logger COM_ROOT_LOGGER = java.util.logging.Logger.getLogger("com.sun.xml.internal.messaging.saaj.soap.ver1_1");
     private static Logger logger = Logger.getLogger(SonosService.class.getSimpleName());
     private static KeenClient client;
+    private static MessageBuilder messageBuilder;
     
     @Resource
 	private WebServiceContext context;
@@ -176,6 +185,7 @@ public class SonosService implements SonosSoap {
     	KEEN_PROJECT_ID = conf.getProperty("KEEN_PROJECT_ID", System.getenv("KEEN_PROJECT_ID"));
     	KEEN_READ_KEY = conf.getProperty("KEEN_READ_KEY", System.getenv("KEEN_READ_KEY"));
     	KEEN_WRITE_KEY = conf.getProperty("KEEN_WRITE_KEY", System.getenv("KEEN_WRITE_KEY"));
+    	MIXPANEL_PROJECT_TOKEN = conf.getProperty("MIXPANEL_PROJECT_TOKEN", System.getenv("MIXPANEL_PROJECT_TOKEN"));
     	initializeCaches(); 
     	initializeMetrics();
     	
@@ -191,6 +201,7 @@ public class SonosService implements SonosSoap {
     	KEEN_PROJECT_ID = System.getenv("KEEN_PROJECT_ID");
     	KEEN_READ_KEY = System.getenv("KEEN_READ_KEY");
     	KEEN_WRITE_KEY = System.getenv("KEEN_WRITE_KEY");
+    	MIXPANEL_PROJECT_TOKEN = System.getenv("MIXPANEL_PROJECT_TOKEN");
     	NPR_CLIENT_ID = System.getenv("NPR_CLIENT_ID");
     	NPR_CLIENT_SECRET = System.getenv("NPR_CLIENT_SECRET");
     	initializeCaches();
@@ -219,6 +230,8 @@ public class SonosService implements SonosSoap {
     	KeenClient.initialize(client);
     	KeenProject project = new KeenProject(KEEN_PROJECT_ID, KEEN_WRITE_KEY, KEEN_READ_KEY);
     	client.setDefaultProject(project);
+    	
+    	messageBuilder = new MessageBuilder(MIXPANEL_PROJECT_TOKEN);
     	
     	Map<String, Object> map = new HashMap<String, Object>();
     	map.put("isDebug", isDebug);
@@ -471,6 +484,19 @@ public class SonosService implements SonosSoap {
         // Add it to the "purchases" collection in your Keen Project.
         KeenClient.client().addEvent("purchases", event);
 		
+        JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceLinkCode", null);
+    
+        ClientDelivery delivery = new ClientDelivery();
+        delivery.addMessage(sentEvent);
+        
+        MixpanelAPI mixpanel = new MixpanelAPI();
+        try {
+			mixpanel.deliver(delivery);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			logger.debug("Mixpanel error: getDeviceLinkCode");
+		}
+        
 		Form form = new Form();
 		form.param("client_id", NPR_CLIENT_ID);				
 		form.param("client_secret", NPR_CLIENT_SECRET);
@@ -562,6 +588,19 @@ public class SonosService implements SonosSoap {
             logger.info(householdId.hashCode() +": Got token");
         }
 		    
+        JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceAuthToken", null);
+        
+        ClientDelivery delivery = new ClientDelivery();
+        delivery.addMessage(sentEvent);
+        
+        MixpanelAPI mixpanel = new MixpanelAPI();
+        try {
+			mixpanel.deliver(delivery);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			logger.debug("Mixpanel error: getDeviceLinkCode");
+		}
+        
         DeviceAuthTokenResult response = new DeviceAuthTokenResult();
 		response.setAuthToken(access_token);	
 		response.setPrivateKey("KEY");
@@ -671,6 +710,19 @@ public class SonosService implements SonosSoap {
 
         // Add it to the "purchases" collection in your Keen Project.
         KeenClient.client().addEvent("purchases", event);
+        
+        JSONObject sentEvent = messageBuilder.event(userId, "getMetadata", null);
+        
+        ClientDelivery delivery = new ClientDelivery();
+        delivery.addMessage(sentEvent);
+        
+        MixpanelAPI mixpanel = new MixpanelAPI();
+        try {
+			mixpanel.deliver(delivery);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			logger.debug("Mixpanel error: getMetadata");
+		}
 		
         GetMetadataResponse response = new GetMetadataResponse();
         
