@@ -727,7 +727,7 @@ public class SonosService implements SonosSoap {
         GetMetadataResponse response = new GetMetadataResponse();
         
 		if(parameters.getId().equals("root")) {					
-			response.setGetMetadataResult(getChannels(userId, auth));												
+			response.setGetMetadataResult(getChannels(userId, auth));											
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.DEFAULT) && parameters.getCount() > 0) {
 			response.setGetMetadataResult(getProgram(userId, auth));
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.HISTORY)) {			
@@ -809,7 +809,7 @@ public class SonosService implements SonosSoap {
         if (mainResultList != null) {         	
             for (int i = 0; i < mainResultList.size(); i++) { 
             	Channel c = new Channel(mainResultList.get(i).getAsJsonObject());
-	            	if(!c.getId().equals("promo")) {
+	            	if(!c.getId().equals("promo") && !c.getId().equals("deepdives")) {
 	            	MediaCollection mc = new MediaCollection();			
 	        		mc.setTitle(c.getFullName());
 	        		mc.setId(SonosService.PROGRAM+":"+c.getId());
