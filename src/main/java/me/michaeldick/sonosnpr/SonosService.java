@@ -40,6 +40,7 @@ import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.jaxws.context.WrappedMessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 
@@ -711,15 +712,20 @@ public class SonosService implements SonosSoap {
         // Add it to the "purchases" collection in your Keen Project.
         KeenClient.client().addEvent("purchases", event);
         
-        JSONObject sentEvent = messageBuilder.event(userId, "getMetadata", null);
-        
-        ClientDelivery delivery = new ClientDelivery();
-        delivery.addMessage(sentEvent);
-        
-        MixpanelAPI mixpanel = new MixpanelAPI();
+        // Mixpanel event
         try {
+	        JSONObject props = new JSONObject();
+	        props.put("Program", parameters.getId());        
+	        
+	        JSONObject sentEvent = messageBuilder.event(userId, "getMetadata", props);
+	        
+	        ClientDelivery delivery = new ClientDelivery();
+	        delivery.addMessage(sentEvent);
+	        
+	        MixpanelAPI mixpanel = new MixpanelAPI();
+        
 			mixpanel.deliver(delivery);
-		} catch (IOException e1) {
+		} catch (IOException | JSONException e1) {
 			// TODO Auto-generated catch block
 			logger.debug("Mixpanel error: getMetadata");
 		}
