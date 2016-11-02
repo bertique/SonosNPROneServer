@@ -128,6 +128,7 @@ public class SonosService implements SonosSoap {
     public static final String HISTORY = "history";
     public static final String PODCAST = "podcasts";
     public static final String AGGREGATION = "aggregation";
+    public static final String MUSIC = "music";
     public static final String SESSIONIDTOKEN = "###";
 
     
@@ -738,6 +739,8 @@ public class SonosService implements SonosSoap {
 			response.setGetMetadataResult(getProgram(userId, auth));
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.HISTORY)) {			
 			response.setGetMetadataResult(getHistory(userId, auth));
+		} else if(parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.MUSIC)) {
+			response.setGetMetadataResult(getMusicPrograms());
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM)) {			
 			response.setGetMetadataResult(getChannel(userId, auth, parameters.getId().replaceAll(SonosService.PROGRAM+":", "")));		
 		} else if(parameters.getId().startsWith(SonosService.PODCAST)) {
@@ -827,11 +830,75 @@ public class SonosService implements SonosSoap {
 			}
         }
         
+        // NPR Music fake node
+        MediaCollection mc = new MediaCollection();
+        mc.setTitle("NPR Music");
+        mc.setId(SonosService.PROGRAM+":"+SonosService.MUSIC);
+        mc.setItemType(ItemType.COLLECTION);
+        mc.setCanPlay(false);
+        mc.setCanEnumerate(true);
+        mcList.add(mc);
+        
 		ml.setCount(mcList.size());
 		ml.setIndex(0);
 		ml.setTotal(mcList.size());				
     	logger.debug("Got program list: "+mcList.size());
     	return ml;
+	}
+	
+	private MediaList getMusicPrograms() {
+		MediaList ml = new MediaList();
+		List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();
+		
+		class nprMusicProgram {
+			String title;
+			String id;
+			String logoUrl;
+			
+			nprMusicProgram(String t, String i, String l) {
+				title = t;
+				id = i;
+				logoUrl = l;
+			}
+		}
+		
+		List<nprMusicProgram> programs = new ArrayList<nprMusicProgram>();		
+		programs.add(new nprMusicProgram("First Listen", "98679384", null));
+		programs.add(new nprMusicProgram("All Songs Considered", "510019", "https://media.npr.org/images/podcasts/primary/icon_510019-045e9424ceb1fd4f5ae73df269de73b8094cd25e.jpg?s=600"));
+		programs.add(new nprMusicProgram("Songs We Love", "122356178", null));
+		programs.add(new nprMusicProgram("Tiny Desk", "510306","https://media.npr.org/images/podcasts/primary/icon_510306_sq-e07b7d616c85f470d3f723646c10bdfe42b845c2-s400-c85.jpg?s=600"));
+		programs.add(new nprMusicProgram("Alt.Latino", "192684845","https://media.npr.org/assets/img/2015/03/19/altlatino_sq-1d6a428fce03069afa0ff73c0f8e83aa6075e23f.jpg?s=600"));
+		programs.add(new nprMusicProgram("From The Top", "510026","https://media.npr.org/images/podcasts/primary/icon_510026-f866286349b685887d938edddea04dd710d21f6d-s400-c85.jpg?s=600"));
+		programs.add(new nprMusicProgram("Jazz Night In America", "347174538", null));
+		programs.add(new nprMusicProgram("Metropolis", "216842113", null));
+		programs.add(new nprMusicProgram("Mountain Stage", "382110109","https://media.npr.org/images/podcasts/primary/icon_382110109-a093242f6974f77af440828c4b538e41c9c1fe19.png?s=600"));
+		programs.add(new nprMusicProgram("Piano Jazz", "15773266","https://media.npr.org/images/podcasts/primary/icon_510056-98c2e1a249277d0d7c5343b2f2f0d7c487007ef4.jpg?s=600"));
+		programs.add(new nprMusicProgram("Song Travels", "150560513","https://media.npr.org/images/podcasts/primary/icon_510304-c565bd4967b2c06e2191eb0b6282ed4551dbf536.jpg?s=600"));
+		programs.add(new nprMusicProgram("The Thistle & Shamrock", "510069", null));		
+		//programs.add(new nprMusicProgram("World Cafe", ""));		
+		
+		for(nprMusicProgram entry : programs) {
+			MediaCollection mc = new MediaCollection();
+	        mc.setTitle(entry.title);
+	        mc.setId(SonosService.AGGREGATION+":"+entry.id);
+	        mc.setItemType(ItemType.COLLECTION);
+	        mc.setCanPlay(false);
+	        mc.setCanEnumerate(true);
+	        
+	        if(entry.logoUrl != null) {
+	        	AlbumArtUrl url = new AlbumArtUrl();
+	        	url.setValue(entry.logoUrl);
+	        	mc.setAlbumArtURI(url);
+	        }
+	        		        
+	        mcList.add(mc);	
+		}		
+        
+		ml.setCount(mcList.size());
+		ml.setIndex(0);
+		ml.setTotal(mcList.size());				
+    	logger.debug("Got music programs: "+mcList.size());    	
+		return ml;
 	}
 
 	// No longer used after switch to oauth
