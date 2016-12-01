@@ -18,10 +18,7 @@ Check out the instructions at [http://michaeldick.me/sonos-nprone/](http://micha
 * Create new Maven build configuration with environment variables:
  * NPR_CLIENT_ID
  * NPR_CLIENT_SECRET
- * KEEN_PROJECT_ID
- * KEEN_READ_KEY
- * KEEN_WRITE_KEY
- * KEEN_ENV
+ * MIXPANEL_PROJECT_TOKEN
 * Run Maven target: *clean package tomcat7:run-war*
 
 ## Run service on Heroku

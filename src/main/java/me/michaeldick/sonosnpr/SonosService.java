@@ -99,9 +99,6 @@ import com.sonos.services._1.TrackMetadata;
 import com.sonos.services._1_1.CustomFault;
 import com.sonos.services._1_1.SonosSoap;
 
-import io.keen.client.java.JavaKeenClientBuilder;
-import io.keen.client.java.KeenClient;
-import io.keen.client.java.KeenProject;
 import me.michaeldick.npr.model.Channel;
 import me.michaeldick.npr.model.Media;
 import me.michaeldick.npr.model.Rating;
@@ -115,11 +112,7 @@ import com.mixpanel.mixpanelapi.MixpanelAPI;
 public class SonosService implements SonosSoap {
 
 	public static String NPR_CLIENT_ID = "";
-	public static String NPR_CLIENT_SECRET = "";
-	
-	public static String KEEN_PROJECT_ID = "";
-	public static String KEEN_WRITE_KEY = "";
-	public static String KEEN_READ_KEY = "";			
+	public static String NPR_CLIENT_SECRET = "";		
 	
 	public static String MIXPANEL_PROJECT_TOKEN = "";
 	
@@ -164,7 +157,6 @@ public class SonosService implements SonosSoap {
     // Disable severe log message for SoapFault
     private static java.util.logging.Logger COM_ROOT_LOGGER = java.util.logging.Logger.getLogger("com.sun.xml.internal.messaging.saaj.soap.ver1_1");
     private static Logger logger = Logger.getLogger(SonosService.class.getSimpleName());
-    private static KeenClient client;
     private static MessageBuilder messageBuilder;
     
     @Resource
@@ -184,9 +176,6 @@ public class SonosService implements SonosSoap {
     	NPR_CLIENT_ID = conf.getProperty("NPR_CLIENT_ID", System.getenv("NPR_CLIENT_ID"));
     	NPR_CLIENT_SECRET = conf.getProperty("NPR_CLIENT_SECRET", System.getenv("NPR_CLIENT_SECRET"));
     	
-    	KEEN_PROJECT_ID = conf.getProperty("KEEN_PROJECT_ID", System.getenv("KEEN_PROJECT_ID"));
-    	KEEN_READ_KEY = conf.getProperty("KEEN_READ_KEY", System.getenv("KEEN_READ_KEY"));
-    	KEEN_WRITE_KEY = conf.getProperty("KEEN_WRITE_KEY", System.getenv("KEEN_WRITE_KEY"));
     	MIXPANEL_PROJECT_TOKEN = conf.getProperty("MIXPANEL_PROJECT_TOKEN", System.getenv("MIXPANEL_PROJECT_TOKEN"));
     	initializeCaches(); 
     	initializeMetrics();
@@ -200,9 +189,6 @@ public class SonosService implements SonosSoap {
     	DEVICE_LINK_URI = DEVICE_LINK_URI_DEFAULT;
     	DEVICE_TOKEN_URI = DEVICE_TOKEN_URI_DEFAULT;
     	
-    	KEEN_PROJECT_ID = System.getenv("KEEN_PROJECT_ID");
-    	KEEN_READ_KEY = System.getenv("KEEN_READ_KEY");
-    	KEEN_WRITE_KEY = System.getenv("KEEN_WRITE_KEY");
     	MIXPANEL_PROJECT_TOKEN = System.getenv("MIXPANEL_PROJECT_TOKEN");
     	NPR_CLIENT_ID = System.getenv("NPR_CLIENT_ID");
     	NPR_CLIENT_SECRET = System.getenv("NPR_CLIENT_SECRET");
@@ -227,19 +213,8 @@ public class SonosService implements SonosSoap {
   		       .expireAfterWrite(20, TimeUnit.MINUTES).build();
     }
     
-    public void initializeMetrics() {
-    	client = new JavaKeenClientBuilder().build();
-    	KeenClient.initialize(client);
-    	KeenProject project = new KeenProject(KEEN_PROJECT_ID, KEEN_WRITE_KEY, KEEN_READ_KEY);
-    	client.setDefaultProject(project);
-    	
-    	messageBuilder = new MessageBuilder(MIXPANEL_PROJECT_TOKEN);
-    	
-    	Map<String, Object> map = new HashMap<String, Object>();
-    	map.put("isDebug", isDebug);
-    	if(System.getenv("KEEN_ENV") != null)
-    		map.put("env", System.getenv("KEEN_ENV"));    	
-    	client.setGlobalProperties(map);
+    public void initializeMetrics() {    	    	
+    	messageBuilder = new MessageBuilder(MIXPANEL_PROJECT_TOKEN);    	
     }
     
 	@Override
@@ -478,13 +453,6 @@ public class SonosService implements SonosSoap {
 	public DeviceLinkCodeResult getDeviceLinkCode(String householdId)
 			throws CustomFault {
 		logger.debug("getDeviceLinkCode");
-
-		Map<String, Object> event = new HashMap<String, Object>();
-        event.put("userid", householdId);
-        event.put("method", "getDeviceLinkCode");
-
-        // Add it to the "purchases" collection in your Keen Project.
-        KeenClient.client().addEvent("purchases", event);
 		
         JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceLinkCode", null);
     
@@ -706,12 +674,6 @@ public class SonosService implements SonosSoap {
 		String userId = creds.getLoginToken().getHouseholdId();
 		String auth = creds.getLoginToken().getToken();
 		logger.debug("Got userId from header:"+userId);
-		Map<String, Object> event = new HashMap<String, Object>();
-        event.put("userid", userId);
-        event.put("method", "getMetadata");
-
-        // Add it to the "purchases" collection in your Keen Project.
-        KeenClient.client().addEvent("purchases", event);
         
         // Mixpanel event
         try {
