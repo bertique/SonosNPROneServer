@@ -254,7 +254,7 @@ public class SonosServiceTest {
 				"    \"expires_in\": 720869706" + 
 				"}");
 		
-		DeviceAuthTokenResult response = service.getDeviceAuthToken("MyTestHousehold", "code", "deviceId");
+		DeviceAuthTokenResult response = service.getDeviceAuthToken("MyTestHousehold", "code", "deviceId", "callback");
 		
 		assertEquals("[accesstoken]", response.getAuthToken());	
 		}

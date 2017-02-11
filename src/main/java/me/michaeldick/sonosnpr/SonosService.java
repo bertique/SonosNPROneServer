@@ -2,10 +2,8 @@ package me.michaeldick.sonosnpr;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +50,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mixpanel.mixpanelapi.ClientDelivery;
+import com.mixpanel.mixpanelapi.MessageBuilder;
+import com.mixpanel.mixpanelapi.MixpanelAPI;
 import com.sonos.services._1.AbstractMedia;
 import com.sonos.services._1.AddToContainerResult;
 import com.sonos.services._1.AlbumArtUrl;
@@ -96,6 +97,7 @@ import com.sonos.services._1.Search;
 import com.sonos.services._1.SearchResponse;
 import com.sonos.services._1.SegmentMetadataList;
 import com.sonos.services._1.TrackMetadata;
+import com.sonos.services._1.UserInfo;
 import com.sonos.services._1_1.CustomFault;
 import com.sonos.services._1_1.SonosSoap;
 
@@ -103,10 +105,6 @@ import me.michaeldick.npr.model.Channel;
 import me.michaeldick.npr.model.Media;
 import me.michaeldick.npr.model.Rating;
 import me.michaeldick.npr.model.RatingsList;
-
-import com.mixpanel.mixpanelapi.ClientDelivery;
-import com.mixpanel.mixpanelapi.MessageBuilder;
-import com.mixpanel.mixpanelapi.MixpanelAPI;
 
 @WebService
 public class SonosService implements SonosSoap {
@@ -522,8 +520,8 @@ public class SonosService implements SonosSoap {
 	}
 
 	@Override
-	public DeviceAuthTokenResult getDeviceAuthToken(String householdId,
-			String linkCode, String linkDeviceId) throws CustomFault {
+	public DeviceAuthTokenResult getDeviceAuthToken(String householdId, String linkCode, String linkDeviceId,
+			String callbackPath) throws CustomFault {
 		logger.debug("getDeviceAuthToken");
 		
 		Form form = new Form();
@@ -1003,6 +1001,12 @@ public class SonosService implements SonosSoap {
 	@Override
 	public AppLinkResult getAppLink(String householdId, String hardware, String osVersion, String sonosAppName,
 			String callbackPath) throws CustomFault {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public UserInfo getUserInfo() throws CustomFault {
 		// TODO Auto-generated method stub
 		return null;
 	}
