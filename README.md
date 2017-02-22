@@ -23,6 +23,5 @@ Check out the instructions at [http://michaeldick.me/sonos-nprone/](http://micha
 
 ## Run service on Heroku
 * Create new Heroku app
-* Add Keen add-in (optional)
 * Set environment variables (see above)
 * Git push to Heroku. It will use the included procfile
