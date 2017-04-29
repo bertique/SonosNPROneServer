@@ -14,6 +14,7 @@ import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -31,7 +32,6 @@ import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.soap.SOAPFaultException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.headers.Header;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.jaxb.JAXBDataBinding;
@@ -103,6 +103,7 @@ import com.sonos.services._1_1.SonosSoap;
 
 import me.michaeldick.npr.model.Channel;
 import me.michaeldick.npr.model.Media;
+import me.michaeldick.npr.model.NprAuth;
 import me.michaeldick.npr.model.Rating;
 import me.michaeldick.npr.model.RatingsList;
 
@@ -136,12 +137,12 @@ public class SonosService implements SonosSoap {
     public static final String PLAYSTATUS_SKIPPED = "skippedTrack";      
     private static final String RATING_ISINTERESTING = "isliked";
 
-    private static final String IDENTITY_API_URI_DEFAULT = "https://api.npr.org/identity/v2/user";
+    //private static final String IDENTITY_API_URI_DEFAULT = "https://api.npr.org/identity/v2/user";
     private static final String LISTENING_API_URI_DEFAULT = "https://api.npr.org/listening/v2";
     private static final String DEVICE_LINK_URI_DEFAULT = "https://api.npr.org/authorization/v2/device";
     private static final String DEVICE_TOKEN_URI_DEFAULT = "https://api.npr.org/authorization/v2/token";
     
-    private static String IDENTITY_API_URI;
+    //private static String IDENTITY_API_URI;
     private static String LISTENING_API_URI;
     private static String DEVICE_LINK_URI;
     private static String DEVICE_TOKEN_URI;
@@ -165,7 +166,7 @@ public class SonosService implements SonosSoap {
 	}
     
     public SonosService(Properties conf) {    	
-    	IDENTITY_API_URI = conf.getProperty("IDENTITY_API_URI", IDENTITY_API_URI_DEFAULT);
+    	//IDENTITY_API_URI = conf.getProperty("IDENTITY_API_URI", IDENTITY_API_URI_DEFAULT);
     	LISTENING_API_URI = conf.getProperty("LISTENING_API_URI", LISTENING_API_URI_DEFAULT);
     	DEVICE_LINK_URI = conf.getProperty("DEVICE_LINK_URI", DEVICE_LINK_URI_DEFAULT);
     	DEVICE_TOKEN_URI = conf.getProperty("DEVICE_TOKEN_URI", DEVICE_TOKEN_URI_DEFAULT);
@@ -182,7 +183,7 @@ public class SonosService implements SonosSoap {
     }
     
     public SonosService () {
-    	IDENTITY_API_URI = IDENTITY_API_URI_DEFAULT;
+    	//IDENTITY_API_URI = IDENTITY_API_URI_DEFAULT;
     	LISTENING_API_URI = LISTENING_API_URI_DEFAULT;
     	DEVICE_LINK_URI = DEVICE_LINK_URI_DEFAULT;
     	DEVICE_TOKEN_URI = DEVICE_TOKEN_URI_DEFAULT;
@@ -235,16 +236,10 @@ public class SonosService implements SonosSoap {
 			GetExtendedMetadata parameters) throws CustomFault {
 		logger.debug("getExtendedMetadata id:"+parameters.getId());
 
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
-		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
-		
+		NprAuth auth = getNprAuth();
+				
 		GetExtendedMetadataResponse response = new GetExtendedMetadataResponse();		
-		Media m = ListeningResponseCache.getIfPresent(userId+parameters.getId());
+		Media m = ListeningResponseCache.getIfPresent(auth.getUserId()+parameters.getId());
 		
         if (m != null) {
         	logger.debug("ListeningResponseCache hit");
@@ -272,15 +267,9 @@ public class SonosService implements SonosSoap {
 			Integer offsetMillis) throws CustomFault {
 		logger.debug("reportPlaySeconds id:"+id+" seconds:"+seconds);
 		if(seconds <= 1) {
-			Credentials creds = getCredentialsFromHeaders();
-			if(creds == null)
-				throwSoapFault(SESSION_INVALID);
-						
-			String userId = creds.getLoginToken().getHouseholdId();
-			String auth = creds.getLoginToken().getToken();							
-			logger.debug("Got userId from header:"+userId);
-			
-			List<Rating> ratingList = RatingCache.getIfPresent(userId);
+			NprAuth auth = getNprAuth();
+													
+			List<Rating> ratingList = RatingCache.getIfPresent(auth.getUserId());
 			
 			if(ratingList == null) {
 				logger.debug("ratingList is empty");
@@ -295,7 +284,7 @@ public class SonosService implements SonosSoap {
 				}
 			}		
 	
-			Media media = ListeningResponseCache.getIfPresent(userId+id);			
+			Media media = ListeningResponseCache.getIfPresent(auth.getUserId()+id);			
 			if(media != null) {
 				Media m = media;
 				logger.debug("media cache hit");
@@ -303,8 +292,8 @@ public class SonosService implements SonosSoap {
 				ratingList.add(new Rating(m.getRating()));
 				List<Rating> list = new ArrayList<Rating>();
 				list.add(new Rating(m.getRating()));
-				RatingCache.put(userId, list);					 					 
-				sendRecommendations(userId, ratingList, m.getRecommendations().get("application/json"), auth);												
+				RatingCache.put(auth.getUserId(), list);					 					 
+				sendRecommendations(ratingList, m.getRecommendations().get("application/json"), auth);												
 			}	 		
 		}
 		ReportPlaySecondsResult result = new ReportPlaySecondsResult();
@@ -323,15 +312,9 @@ public class SonosService implements SonosSoap {
 	public RateItemResponse rateItem(RateItem parameters) throws CustomFault {
 		logger.debug("rateItem id:"+parameters.getId()+" rating:"+parameters.getRating());
 
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
-		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
-		
-		List<Rating> list = RatingCache.getIfPresent(userId);			
+		NprAuth auth = getNprAuth();
+				
+		List<Rating> list = RatingCache.getIfPresent(auth.getUserId());			
 		if(list != null) {
 			logger.debug("RatingCache hit");
 			boolean alreadyThumbed = false;
@@ -347,7 +330,7 @@ public class SonosService implements SonosSoap {
 						Rating rnew = new Rating(r);
 						rnew.setRating(RatingsList.THUMBUP);
 						list.add(rnew);
-						RatingCache.put(userId, list);
+						RatingCache.put(auth.getUserId(), list);
 						Gson gson = new GsonBuilder().create();
 						logger.debug("Rating cache:"+gson.toJson(list));
 						break;
@@ -356,11 +339,11 @@ public class SonosService implements SonosSoap {
 			}
 		}		
 		
-		Media media = ListeningResponseCache.getIfPresent(userId+parameters.getId());
+		Media media = ListeningResponseCache.getIfPresent(auth.getUserId()+parameters.getId());
 		if(media != null) {
 			Media ratedItem = media;
 			ratedItem.getRating().setRating(RatingsList.THUMBUP);
-			ListeningResponseCache.put(userId+parameters.getId(), media);
+			ListeningResponseCache.put(auth.getUserId()+parameters.getId(), media);
 		}
 		
 		ItemRating rating = new ItemRating();
@@ -400,44 +383,32 @@ public class SonosService implements SonosSoap {
 			throws CustomFault {
 		logger.debug("setPlayedSeconds id:"+id+" sec:"+seconds);
 
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
+		NprAuth auth = getNprAuth();
 		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
-		
-		List<Rating> list = RatingCache.getIfPresent(userId);			
+		List<Rating> list = RatingCache.getIfPresent(auth.getUserId());			
 		if(list != null) {
 			logger.debug("RatingCache hit");
 			for(Rating r : list) {
 				if(r.getMediaId().equals(id)) {
 					logger.debug("Setting seconds");
 					r.setElapsed(seconds);
-					RatingCache.put(userId, list);
+					RatingCache.put(auth.getUserId(), list);
 					break;
 				}
 			}		
 		}
-		ListeningResponseCache.invalidate(userId+id);
+		ListeningResponseCache.invalidate(auth.getUserId()+id);
 	}
 
 	@Override
 	public LastUpdate getLastUpdate() throws CustomFault {
 		logger.debug("getLastUpdate");
 	
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
-		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
+		NprAuth auth = getNprAuth();	
 		
 		LastUpdate response = new LastUpdate();
 		
-		List<Rating> list = RatingCache.getIfPresent(userId);				
+		List<Rating> list = RatingCache.getIfPresent(auth.getUserId());				
 		if(list != null) 
 			response.setFavorites(Integer.toString(list.hashCode()));
 		else
@@ -449,7 +420,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public DeviceLinkCodeResult getDeviceLinkCode(String householdId)
-			throws CustomFault {
+			throws CustomFault {	
 		logger.debug("getDeviceLinkCode");
 		
         JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceLinkCode", null);
@@ -607,15 +578,9 @@ public class SonosService implements SonosSoap {
 			Holder<PositionInformation> positionInformation, Holder<String> privateDataFieldName) throws CustomFault {
 		logger.debug("getMediaURI id:"+id);
 		
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
+		NprAuth auth = getNprAuth();	
 		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
-		
-		Media m = ListeningResponseCache.getIfPresent(userId+id);
+		Media m = ListeningResponseCache.getIfPresent(auth.getUserId()+id);
 		if(m != null) {
 			if(m.getAudioLinks().containsKey("audio/mp3") && !m.getAudioLinks().get("audio/mp3").endsWith(".mp4")) {			
 				getMediaURIResult.value = m.getAudioLinks().get("audio/mp3");				
@@ -638,16 +603,10 @@ public class SonosService implements SonosSoap {
 			throws CustomFault {
 		logger.debug("getMediaMetadata id:"+parameters.getId());
 
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
-		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
-		
+		NprAuth auth = getNprAuth();
+				
 		GetMediaMetadataResponse response = new GetMediaMetadataResponse();		
-		Media m = ListeningResponseCache.getIfPresent(userId+parameters.getId());
+		Media m = ListeningResponseCache.getIfPresent(auth.getUserId()+parameters.getId());
 		
         if (m != null) {
         	logger.debug("ListeningResponseCache hit");
@@ -665,20 +624,14 @@ public class SonosService implements SonosSoap {
 			throws CustomFault {
 		logger.debug("getMetadata id:"+parameters.getId()+" count:"+parameters.getCount()+" index:"+parameters.getIndex());
 
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
-		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
+		NprAuth auth = getNprAuth();		
         
         // Mixpanel event
         try {
 	        JSONObject props = new JSONObject();
 	        props.put("Program", parameters.getId());        
 	        
-	        JSONObject sentEvent = messageBuilder.event(userId, "getMetadata", props);
+	        JSONObject sentEvent = messageBuilder.event(auth.getUserId(), "getMetadata", props);
 	        
 	        ClientDelivery delivery = new ClientDelivery();
 	        delivery.addMessage(sentEvent);
@@ -694,18 +647,18 @@ public class SonosService implements SonosSoap {
         GetMetadataResponse response = new GetMetadataResponse();
         
 		if(parameters.getId().equals("root")) {					
-			response.setGetMetadataResult(getChannels(userId, auth));											
+			response.setGetMetadataResult(getChannels(auth));											
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.DEFAULT) && parameters.getCount() > 0) {
-			response.setGetMetadataResult(getProgram(userId, auth));
+			response.setGetMetadataResult(getProgram(auth));
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM+":"+SonosService.HISTORY)) {			
-			response.setGetMetadataResult(getHistory(userId, auth));
+			response.setGetMetadataResult(getHistory(auth));
 		} else if(parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.MUSIC)) {
 			response.setGetMetadataResult(getMusicPrograms());
 		} else if(parameters.getId().startsWith(SonosService.PROGRAM)) {			
-			response.setGetMetadataResult(getChannel(userId, auth, parameters.getId().replaceAll(SonosService.PROGRAM+":", "")));		
+			response.setGetMetadataResult(getChannel(auth, parameters.getId().replaceAll(SonosService.PROGRAM+":", "")));		
 		} else if(parameters.getId().startsWith(SonosService.PODCAST)) {
-			MediaList ml = getProgram(userId, auth);
-			Media m = ListeningResponseCache.getIfPresent(userId+parameters.getId().replaceAll(SonosService.PODCAST+":", ""));
+			MediaList ml = getProgram(auth);
+			Media m = ListeningResponseCache.getIfPresent(auth.getUserId()+parameters.getId().replaceAll(SonosService.PODCAST+":", ""));
 			if (m != null) {
 				ml.getMediaCollectionOrMediaMetadata().add(0, buildMMD(m));			
 				ml.setCount(ml.getCount()+1);
@@ -713,7 +666,7 @@ public class SonosService implements SonosSoap {
 			}			
 			response.setGetMetadataResult(ml);
 		} else if(parameters.getId().startsWith(SonosService.AGGREGATION)) {			
-			response.setGetMetadataResult(getAggregation(parameters.getId().replaceAll(SonosService.AGGREGATION+":",""), userId, auth));
+			response.setGetMetadataResult(getAggregation(parameters.getId().replaceAll(SonosService.AGGREGATION+":",""), auth));
 		} else if(parameters.getId().equals(ItemType.SEARCH.value())) {			
 			MediaList ml = new MediaList();
 			List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();
@@ -732,7 +685,7 @@ public class SonosService implements SonosSoap {
 			return null;
 		}
 		
-		String logLine = userId.hashCode() + ": Got Metadata for "+parameters.getId()+", "+response.getGetMetadataResult().getCount();
+		String logLine = auth.getUserId().hashCode() + ": Got Metadata for "+parameters.getId()+", "+response.getGetMetadataResult().getCount();
 		logLine += " (";
 		for(AbstractMedia m : response.getGetMetadataResult().getMediaCollectionOrMediaMetadata()) {
 			logLine += m.getId().substring(m.getId().length() - 2) + " ";
@@ -743,21 +696,9 @@ public class SonosService implements SonosSoap {
 		return response;
 	}
 
-	private MediaList getChannels(String userId, String auth) {
+	private MediaList getChannels(NprAuth auth) {
 		
-		String json = "";
-		try {
-			Client client = ClientBuilder.newClient();
-			json = client.target(LISTENING_API_URI)
-					.path("channels")							
-					.queryParam("exploreOnly", "true")
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.header("Authorization", "Bearer " + auth)
-					.get(String.class);
-			client.close();
-		} catch (NotAuthorizedException e) {
-			throwSoapFault(AUTH_TOKEN_EXPIRED);
-		}
+		String json = nprApiGetRequest("channels", "exploreOnly", "true", auth);
 				
 		JsonParser parser = new JsonParser();
 		JsonElement element = parser.parse(json);
@@ -869,42 +810,43 @@ public class SonosService implements SonosSoap {
 		
 		throwSoapFault(AUTH_TOKEN_EXPIRED);
 		
-		if(parameters.getUsername().equals("") || parameters.getPassword().equals(""))
-			throwSoapFault(LOGIN_INVALID);
-		
-		logger.debug("Attempting login");
-		String authParameter = "{\"username\":\""+parameters.getUsername()+"\",\"password\":\""+parameters.getPassword()+"\"}";
-		byte[] encodedAuth = Base64.encodeBase64(authParameter.getBytes());
-		Form form = new Form();
-		form.param("auth", new String(encodedAuth));		
-		
-		String json = "";
-		try {
-			Client client = ClientBuilder.newClient();
-			json = client.target(IDENTITY_API_URI)
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.post(Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED_TYPE), String.class);
-			client.close();
-		} catch (NotAuthorizedException e) {
-			logger.debug("login NotAuthorized: "+e.getMessage());
-			throwSoapFault(LOGIN_INVALID);
-		}
-		
-		JsonParser parser = new JsonParser();
-        JsonElement element = parser.parse(json);
-        String auth_token = "";
-        String userId = "";
-        if (element.isJsonObject()) {
-        	JsonObject root = element.getAsJsonObject();
-            JsonObject data = root.getAsJsonObject("data");
-            auth_token = data.get("auth_token").getAsString();
-            userId = data.getAsJsonObject("user").get("id").getAsString();
-            logger.debug("Login successful for: "+userId);
-        }
-		    
-		GetSessionIdResponse response = new GetSessionIdResponse();
-		response.setGetSessionIdResult(userId+"###"+auth_token);
-		return response;
+		return null;
+//		if(parameters.getUsername().equals("") || parameters.getPassword().equals(""))
+//			throwSoapFault(LOGIN_INVALID);
+//		
+//		logger.debug("Attempting login");
+//		String authParameter = "{\"username\":\""+parameters.getUsername()+"\",\"password\":\""+parameters.getPassword()+"\"}";
+//		byte[] encodedAuth = Base64.encodeBase64(authParameter.getBytes());
+//		Form form = new Form();
+//		form.param("auth", new String(encodedAuth));		
+//		
+//		String json = "";
+//		try {
+//			Client client = ClientBuilder.newClient();
+//			json = client.target(IDENTITY_API_URI)
+//					.request(MediaType.APPLICATION_JSON_TYPE)
+//					.post(Entity.entity(form,MediaType.APPLICATION_FORM_URLENCODED_TYPE), String.class);
+//			client.close();
+//		} catch (NotAuthorizedException e) {
+//			logger.debug("login NotAuthorized: "+e.getMessage());
+//			throwSoapFault(LOGIN_INVALID);
+//		}
+//		
+//		JsonParser parser = new JsonParser();
+//        JsonElement element = parser.parse(json);
+//        String auth_token = "";
+//        String userId = "";
+//        if (element.isJsonObject()) {
+//        	JsonObject root = element.getAsJsonObject();
+//            JsonObject data = root.getAsJsonObject("data");
+//            auth_token = data.get("auth_token").getAsString();
+//            userId = data.getAsJsonObject("user").get("id").getAsString();
+//            logger.debug("Login successful for: "+userId);
+//        }
+//		    
+//		GetSessionIdResponse response = new GetSessionIdResponse();
+//		response.setGetSessionIdResult(userId+"###"+auth_token);
+//		return response;
 	}
 
 	@Override
@@ -932,29 +874,23 @@ public class SonosService implements SonosSoap {
 	public void reportPlayStatus(String id, String status, String contextId, Integer offsetMillis) throws CustomFault {		
 		logger.debug("reportPlayStatus");
 
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
-		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
+		NprAuth auth = getNprAuth();
 		
 		if(status.equals(PLAYSTATUS_SKIPPED)) {
 			logger.debug("PlayStatus is skipped");
-			List<Rating> list = RatingCache.getIfPresent(userId);			
+			List<Rating> list = RatingCache.getIfPresent(auth.getUserId());			
 			if(list != null) {
 				logger.debug("Cache hit");
 				for(Rating r : list) {
 					if(r.getMediaId().equals(id)) {
 						r.setRating(RatingsList.SKIP);
-						RatingCache.put(userId, list);
+						RatingCache.put(auth.getUserId(), list);
 						logger.debug("Rating set");
 						break;
 					}
 				}
 			}
-			ListeningResponseCache.invalidate(userId+id);
+			ListeningResponseCache.invalidate(auth.getUserId()+id);
 		}
 	}
 
@@ -975,26 +911,12 @@ public class SonosService implements SonosSoap {
 			return response;
 		}
 		
-		Credentials creds = getCredentialsFromHeaders();
-		if(creds == null)
-			throwSoapFault(SESSION_INVALID);
+		NprAuth auth = getNprAuth();
 		
-		String userId = creds.getLoginToken().getHouseholdId();
-		String auth = creds.getLoginToken().getToken();
-		logger.debug("Got userId from header:"+userId);
-		
-		Client client = ClientBuilder.newClient();
-		String json = client.target(LISTENING_API_URI)		
-				.path("search")
-				.path("recommendations")
-				.queryParam("searchTerms", parameters.getTerm())				
-				.request(MediaType.APPLICATION_JSON_TYPE)
-				.header("Authorization", "Bearer "+auth)
-				.get(String.class);
-		client.close();
+		String json = nprApiGetRequest("search/recommendations", "searchTerms", parameters.getTerm(), auth);
 		
 		SearchResponse response = new SearchResponse();
-		response.setSearchResult(parseMediaListResponse(userId, json));				
+		response.setSearchResult(parseMediaListResponse(auth.getUserId(), json));				
 		return response;
 	}
 
@@ -1013,31 +935,18 @@ public class SonosService implements SonosSoap {
 	
 	// Private methods
 	
-	private static MediaList getProgram(String userId, String auth) {							
+	private static MediaList getProgram(NprAuth auth) {							
 		MediaList ml = new MediaList();
     	List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();		
 					
-		String json = "";
-		try {
-			Client client = ClientBuilder.newClient();
-			json = client.target(LISTENING_API_URI)
-					.path("recommendations")					
-					.queryParam("channel", "npr")
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.header("Authorization", "Bearer "+auth)
-					.get(String.class);
-			client.close();	
-		}catch (NotAuthorizedException e) {
-			throwSoapFault(AUTH_TOKEN_EXPIRED);
-		}
-		
+		String json = nprApiGetRequest("recommendations", "channel", "npr", auth);		
 		
 		JsonParser parser = new JsonParser();
 		JsonElement element = parser.parse(json);
 	        
 		JsonArray searchResultList = element.getAsJsonObject().getAsJsonArray("items");		
         
-		List<AbstractMedia> lastProgramCall = LastResponseToPlayer.getIfPresent(userId);
+		List<AbstractMedia> lastProgramCall = LastResponseToPlayer.getIfPresent(auth.getUserId());
 		
         if (searchResultList == null)
         	return new MediaList(); 
@@ -1062,7 +971,7 @@ public class SonosService implements SonosSoap {
 				}
 				newPlayQueue.add(mmd.getId());
 				logger.debug("adding track id: "+mmd.getId());
-				ListeningResponseCache.put(userId+mmd.getId(), m);					
+				ListeningResponseCache.put(auth.getUserId()+mmd.getId(), m);					
 			}
 		}	        		
 		
@@ -1070,44 +979,44 @@ public class SonosService implements SonosSoap {
 		ml.setIndex(0);
 		ml.setTotal(mcList.size());				
     	logger.debug("Got program list: "+mcList.size());
-    	LastResponseToPlayer.put(userId, mcList);
+    	LastResponseToPlayer.put(auth.getUserId(), mcList);
 			
     	return ml;                			
 	}
 	
-	private static MediaList getChannel(String userId, String auth, String channel) {		
+	private static String nprApiGetRequest(String path, String queryParamName, String queryParam, NprAuth auth) {
 		String json = "";
-		try {
+		try {	
 			Client client = ClientBuilder.newClient();
-			json = client.target(LISTENING_API_URI)
-					.path("recommendations")								
-					.queryParam("channel", channel)
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.header("Authorization", "Bearer " + auth)
-					.get(String.class);
+			WebTarget target = client
+					.target(LISTENING_API_URI)
+					.path(path);
+			if(queryParamName != null && queryParam != null) {
+				target = target.queryParam(queryParamName, queryParam);
+			}
+			json = target.request(MediaType.APPLICATION_JSON_TYPE)
+				  .header("Authorization", "Bearer " + auth.getAuth())
+				  .get(String.class);
 			client.close();
+			
 		} catch (NotAuthorizedException e) {
-			throwSoapFault(AUTH_TOKEN_EXPIRED);
-		}
-				
-		return parseMediaListResponse(userId, json);						
+			logger.debug("request NotAuthorized: "+e.getMessage());
+			throwSoapFault(AUTH_TOKEN_EXPIRED);		
+		} catch (BadRequestException e) {
+			logger.error("Bad request: "+e.getMessage());
+			logger.error(e.getResponse().readEntity(String.class));
+		}		
+		return json;
 	}
 	
-	private static MediaList getHistory(String userId, String auth) {		
-		String json = "";
-		try {
-			Client client = ClientBuilder.newClient();
-			json = client.target(LISTENING_API_URI)
-					.path("history")	
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.header("Authorization", "Bearer " + auth)
-					.get(String.class);
-			client.close();
-		} catch (NotAuthorizedException e) {
-			throwSoapFault(AUTH_TOKEN_EXPIRED);
-		}
-				
-		return parseMediaListResponse(userId, json);						
+	private static MediaList getChannel(NprAuth auth, String channel) {		
+		String json = nprApiGetRequest("recommendations", "channel", channel, auth);						
+		return parseMediaListResponse(auth.getUserId(), json);						
+	}
+	
+	private static MediaList getHistory(NprAuth auth) {		
+		String json = nprApiGetRequest("history", null, null, auth);				
+		return parseMediaListResponse(auth.getUserId(), json);						
 	}
 
 	private static MediaList parseMediaListResponse(String userId, String json) {
@@ -1156,24 +1065,10 @@ public class SonosService implements SonosSoap {
         }
 	}
 	
-	private static MediaList getAggregation(String id, String userId, String auth) {
-		String json = "";
-		try {
-			Client client = ClientBuilder.newClient();
-			json = client.target(LISTENING_API_URI)
-					.path("aggregation")
-					.path(id)
-					.path("recommendations")						
-					.queryParam("startNum", "0")
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.header("Authorization", "Bearer "+ auth)
-					.get(String.class);
-			client.close();
-		} catch (NotAuthorizedException e) {
-			throwSoapFault(AUTH_TOKEN_EXPIRED);
-		}
+	private static MediaList getAggregation(String id, NprAuth auth) {
+		String json = nprApiGetRequest("aggregation/"+id+"/recommendations", "startNum", "0", auth);		
 		
-		return parseMediaListResponse(userId, json);
+		return parseMediaListResponse(auth.getUserId(), json);
 	}
 	
 	public static void main(String[] args) {
@@ -1202,7 +1097,7 @@ public class SonosService implements SonosSoap {
 		System.out.println(json);
 	}
 	
-	private static void sendRecommendations(String userId, List<Rating> ratingsToSend, String uri, String auth) {
+	private static void sendRecommendations(List<Rating> ratingsToSend, String uri, NprAuth auth) {
 	
 		if(ratingsToSend != null)
 		{
@@ -1212,9 +1107,9 @@ public class SonosService implements SonosSoap {
 			logger.debug("sending :"+jsonOutput);
 			
 			Client client = ClientBuilder.newClient();
-			String json = client.target(uri)					
+			client.target(uri)					
 					.request(MediaType.APPLICATION_JSON_TYPE)
-					.header("Authorization", "Bearer "+ auth)
+					.header("Authorization", "Bearer "+ auth.getAuth())
 					.post(Entity.json(jsonOutput), String.class);
 			client.close();						
 		}
@@ -1347,6 +1242,16 @@ public class SonosService implements SonosSoap {
             throw new SOAPFaultException(soapFault);
 
     }
+	
+	private NprAuth getNprAuth() {
+		Credentials creds = getCredentialsFromHeaders();
+		if(creds == null)
+			throwSoapFault(SESSION_INVALID);
+		
+		logger.debug("Got userId from header:"+creds.getLoginToken().getHouseholdId());		
+		return new NprAuth(creds.getLoginToken().getHouseholdId(), creds.getLoginToken().getToken());	
+	}
+	
 	
 	private Credentials getCredentialsFromHeaders() {
 		if(isDebug) {
