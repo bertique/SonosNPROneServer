@@ -1,4 +1,4 @@
-# NPR One Sonos Service
+# NPR One Sonos Service [![Build Status](https://travis-ci.org/bertique/SonosNPROneServer.svg?branch=master)](https://travis-ci.org/bertique/SonosNPROneServer)
 I love my Sonos system and I really like the [NPR One app](http://www.npr.org/about/products/npr-one/). That’s why I have built this service.
 
 Issues and pull-requests welcome.
