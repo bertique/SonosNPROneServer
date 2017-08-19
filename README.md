@@ -19,7 +19,8 @@ Check out the instructions at [http://michaeldick.me/sonos-nprone/](http://micha
  * NPR_CLIENT_ID
  * NPR_CLIENT_SECRET
  * MIXPANEL_PROJECT_TOKEN
-* Run Maven target: *clean package tomcat7:run-war*
+* Generate the ssl key once through Maven: *keytool:generateKeyPair*
+* Run Maven target: *tomcat7:run-war*
 
 ## Run service on Heroku
 * Create new Heroku app
