@@ -85,8 +85,9 @@
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>
-		<plugins>
-			<plugin>
+		 <pluginManagement>
+		<plugins>			
+		<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>keytool-maven-plugin</artifactId>
 				<version>1.5</version>
@@ -198,5 +199,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		 </pluginManagement>
 	</build>
 </project>
