@@ -56,6 +56,7 @@ import com.mixpanel.mixpanelapi.MixpanelAPI;
 import com.sonos.services._1.AbstractMedia;
 import com.sonos.services._1.AddToContainerResult;
 import com.sonos.services._1.AlbumArtUrl;
+import com.sonos.services._1.AppLinkInfo;
 import com.sonos.services._1.AppLinkResult;
 import com.sonos.services._1.ContentKey;
 import com.sonos.services._1.CreateContainerResult;
@@ -421,66 +422,70 @@ public class SonosService implements SonosSoap {
 	@Override
 	public DeviceLinkCodeResult getDeviceLinkCode(String householdId)
 			throws CustomFault {	
-		logger.debug("getDeviceLinkCode");
+		logger.debug("getDeviceLinkCode (deprecated)");
 		
-        JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceLinkCode", null);
-    
-        ClientDelivery delivery = new ClientDelivery();
-        delivery.addMessage(sentEvent);
-        
-        MixpanelAPI mixpanel = new MixpanelAPI();
-        try {
-			mixpanel.deliver(delivery);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			logger.debug("Mixpanel error: getDeviceLinkCode");
-		}
-        
-		Form form = new Form();
-		form.param("client_id", NPR_CLIENT_ID);				
-		form.param("client_secret", NPR_CLIENT_SECRET);
-		form.param("scope", "identity.readonly "+ 
-				"identity.write " + 
-				"listening.readonly " + 
-				"listening.write " + 
-				"localactivation");
+		throwSoapFault(AUTH_TOKEN_EXPIRED);
 		
-		String json = "";
-		try {
-			Client client = ClientBuilder.newClient();
-			json = client.target(DEVICE_LINK_URI)
-					.request(MediaType.APPLICATION_JSON_TYPE)
-					.post(Entity.form(form), String.class);
-			client.close();
-		} catch (NotAuthorizedException e) {			
-			logger.info(householdId.hashCode() +": login NotAuthorized");
-			logger.debug(householdId.hashCode() +": "+e.getMessage());
-			throwSoapFault(LOGIN_INVALID);
-		} catch (BadRequestException e) {
-			logger.error("Bad request: "+e.getMessage());
-			logger.error(e.getResponse().readEntity(String.class));
-			throwSoapFault(SERVICE_UNKNOWN_ERROR);
-		}
+		return null;
 		
-		JsonParser parser = new JsonParser();
-        JsonElement element = parser.parse(json);
-        String verification_uri = "";
-        String user_code = "";
-        String device_code = "";
-        if (element.isJsonObject()) {
-        	JsonObject root = element.getAsJsonObject();
-            verification_uri = root.get("verification_uri").getAsString();
-            user_code = root.get("user_code").getAsString();
-            device_code = root.get("device_code").getAsString();
-            logger.info(householdId.hashCode() +": Got verification uri");
-        }
-		    
-        DeviceLinkCodeResult response = new DeviceLinkCodeResult();
-		response.setLinkCode(user_code);
-		response.setRegUrl(verification_uri);
-		response.setLinkDeviceId(device_code);
-        response.setShowLinkCode(true);
-		return response;
+//        JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceLinkCode", null);
+//    
+//        ClientDelivery delivery = new ClientDelivery();
+//        delivery.addMessage(sentEvent);
+//        
+//        MixpanelAPI mixpanel = new MixpanelAPI();
+//        try {
+//			mixpanel.deliver(delivery);
+//		} catch (IOException e1) {
+//			// TODO Auto-generated catch block
+//			logger.debug("Mixpanel error: getDeviceLinkCode");
+//		}
+//        
+//		Form form = new Form();
+//		form.param("client_id", NPR_CLIENT_ID);				
+//		form.param("client_secret", NPR_CLIENT_SECRET);
+//		form.param("scope", "identity.readonly "+ 
+//				"identity.write " + 
+//				"listening.readonly " + 
+//				"listening.write " + 
+//				"localactivation");
+//		
+//		String json = "";
+//		try {
+//			Client client = ClientBuilder.newClient();
+//			json = client.target(DEVICE_LINK_URI)
+//					.request(MediaType.APPLICATION_JSON_TYPE)
+//					.post(Entity.form(form), String.class);
+//			client.close();
+//		} catch (NotAuthorizedException e) {			
+//			logger.info(householdId.hashCode() +": login NotAuthorized");
+//			logger.debug(householdId.hashCode() +": "+e.getMessage());
+//			throwSoapFault(LOGIN_INVALID);
+//		} catch (BadRequestException e) {
+//			logger.error("Bad request: "+e.getMessage());
+//			logger.error(e.getResponse().readEntity(String.class));
+//			throwSoapFault(SERVICE_UNKNOWN_ERROR);
+//		}
+//		
+//		JsonParser parser = new JsonParser();
+//        JsonElement element = parser.parse(json);
+//        String verification_uri = "";
+//        String user_code = "";
+//        String device_code = "";
+//        if (element.isJsonObject()) {
+//        	JsonObject root = element.getAsJsonObject();
+//            verification_uri = root.get("verification_uri").getAsString();
+//            user_code = root.get("user_code").getAsString();
+//            device_code = root.get("device_code").getAsString();
+//            logger.info(householdId.hashCode() +": Got verification uri");
+//        }
+//		    
+//        DeviceLinkCodeResult response = new DeviceLinkCodeResult();
+//		response.setLinkCode(user_code);
+//		response.setRegUrl(verification_uri);
+//		response.setLinkDeviceId(device_code);
+//        response.setShowLinkCode(true);
+//		return response;
 	}
 
 	@Override
@@ -923,8 +928,83 @@ public class SonosService implements SonosSoap {
 	@Override
 	public AppLinkResult getAppLink(String householdId, String hardware, String osVersion, String sonosAppName,
 			String callbackPath) throws CustomFault {
-		// TODO Auto-generated method stub
-		return null;
+		logger.debug("getAppLink");
+		
+		JSONObject sentEvent = messageBuilder.event(householdId, "getAppLink", null);
+	    
+        ClientDelivery delivery = new ClientDelivery();
+        delivery.addMessage(sentEvent);
+        
+        MixpanelAPI mixpanel = new MixpanelAPI();
+        try {
+			mixpanel.deliver(delivery);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			logger.debug("Mixpanel error: getAppLink");
+		}
+        
+		Form form = new Form();
+		form.param("client_id", NPR_CLIENT_ID);				
+		form.param("client_secret", NPR_CLIENT_SECRET);
+		form.param("scope", "identity.readonly "+ 
+				"identity.write " + 
+				"listening.readonly " + 
+				"listening.write " + 
+				"localactivation");
+		
+		String json = "";
+		try {
+			Client client = ClientBuilder.newClient();
+			json = client.target(DEVICE_LINK_URI)
+					.request(MediaType.APPLICATION_JSON_TYPE)
+					.post(Entity.form(form), String.class);
+			client.close();
+		} catch (NotAuthorizedException e) {			
+			logger.info(householdId.hashCode() +": login NotAuthorized");
+			logger.debug(householdId.hashCode() +": "+e.getMessage());
+			throwSoapFault(LOGIN_INVALID);
+		} catch (BadRequestException e) {
+			logger.error("Bad request: "+e.getMessage());
+			logger.error(e.getResponse().readEntity(String.class));
+			throwSoapFault(SERVICE_UNKNOWN_ERROR);
+		}
+		
+		JsonParser parser = new JsonParser();
+        JsonElement element = parser.parse(json);
+        String verification_uri = "";
+        String user_code = "";
+        String device_code = "";
+        if (element.isJsonObject()) {
+        	JsonObject root = element.getAsJsonObject();
+            verification_uri = root.get("verification_uri").getAsString();
+            user_code = root.get("user_code").getAsString();
+            device_code = root.get("device_code").getAsString();
+            logger.info(householdId.hashCode() +": Got verification uri");
+        }
+		
+        AppLinkResult response = new AppLinkResult();
+        
+        AppLinkInfo authorizeLinkInfo = new AppLinkInfo();        
+        authorizeLinkInfo.setAppUrlStringId("SIGN_IN");
+        DeviceLinkCodeResult linkCodeResult = new DeviceLinkCodeResult();
+        linkCodeResult.setLinkCode(user_code);
+        linkCodeResult.setLinkDeviceId(device_code);
+        linkCodeResult.setRegUrl(verification_uri);
+        linkCodeResult.setShowLinkCode(true);
+        authorizeLinkInfo.setDeviceLink(linkCodeResult);        
+        response.setAuthorizeAccount(authorizeLinkInfo);
+           
+        AppLinkInfo createLinkInfo = new AppLinkInfo();        
+        createLinkInfo.setAppUrlStringId("SIGN_IN");
+        DeviceLinkCodeResult authLinkCodeResult = new DeviceLinkCodeResult();
+        linkCodeResult.setLinkCode(user_code);
+        linkCodeResult.setLinkDeviceId(device_code);
+        linkCodeResult.setRegUrl(verification_uri);
+        linkCodeResult.setShowLinkCode(true);
+        createLinkInfo.setDeviceLink(authLinkCodeResult);        
+        response.setCreateAccount(createLinkInfo);
+        
+		return response;
 	}
 	
 	@Override

@@ -223,7 +223,7 @@ public class SonosServiceTest {
 		assertNotEquals(response.getFavorites(), response2.getFavorites());
 	}
 	
-	@Test
+	@Test (expected=SOAPFaultException.class)
 	public void testGetDeviceLinkCode() throws CustomFault {
 		server.setMockResponseData("{" + 
 				"    \"device_code\": \"[thedevicecode]\"," + 
