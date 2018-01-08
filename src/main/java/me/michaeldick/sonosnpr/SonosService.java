@@ -627,22 +627,28 @@ public class SonosService implements SonosSoap {
 		NprAuth auth = getNprAuth();		
         
         // Mixpanel event
-        try {
-	        JSONObject props = new JSONObject();
-	        props.put("Program", parameters.getId());        
+		if(parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.DEFAULT)
+			|| parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.HISTORY)
+			|| parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.MUSIC)
+			|| parameters.getId().equals(ItemType.SEARCH.value())) {
+			
+			try {
+		        JSONObject props = new JSONObject();
+		        props.put("Program", parameters.getId());        
+		        
+		        JSONObject sentEvent = messageBuilder.event(auth.getUserId(), "getMetadata", props);
+		        
+		        ClientDelivery delivery = new ClientDelivery();
+		        delivery.addMessage(sentEvent);
+		        
+		        MixpanelAPI mixpanel = new MixpanelAPI();
 	        
-	        JSONObject sentEvent = messageBuilder.event(auth.getUserId(), "getMetadata", props);
-	        
-	        ClientDelivery delivery = new ClientDelivery();
-	        delivery.addMessage(sentEvent);
-	        
-	        MixpanelAPI mixpanel = new MixpanelAPI();
-        
-			mixpanel.deliver(delivery);
-		} catch (IOException | JSONException e1) {
-			// TODO Auto-generated catch block
-			logger.debug("Mixpanel error: getMetadata");
-		}
+				mixpanel.deliver(delivery);
+			} catch (IOException | JSONException e1) {
+				// TODO Auto-generated catch block
+				logger.debug("Mixpanel error: getMetadata");
+			}
+		}        
 		
         GetMetadataResponse response = new GetMetadataResponse();
         
