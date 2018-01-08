@@ -1304,4 +1304,10 @@ public class SonosService implements SonosSoap {
 		}
 		return null;
 	}
+
+	@Override
+	public DeviceAuthTokenResult refreshAuthToken() throws CustomFault {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
