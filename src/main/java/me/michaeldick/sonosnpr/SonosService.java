@@ -200,15 +200,15 @@ public class SonosService implements SonosSoap {
     private void initializeCaches() {
  	
     	ListeningResponseCache = CacheBuilder.newBuilder()
-		       .maximumSize(1000)
+		       .maximumSize(600)
 		       .expireAfterWrite(20, TimeUnit.MINUTES).build();
  	
     	RatingCache = CacheBuilder.newBuilder()
-		       .maximumSize(1000)
+		       .maximumSize(600)
 		       .expireAfterWrite(20, TimeUnit.MINUTES).build();
     	
     	LastResponseToPlayer = CacheBuilder.newBuilder()
-  		       .maximumSize(1000)
+  		       .maximumSize(600)
   		       .expireAfterWrite(20, TimeUnit.MINUTES).build();
     }
     
