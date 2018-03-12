@@ -85,7 +85,7 @@
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>
-		<plugins>			
+		<plugins>		        
 		<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>keytool-maven-plugin</artifactId>
@@ -159,7 +159,7 @@
 						<goals>
 							<goal>copy-dependencies</goal>
 						</goals>
-					</execution>
+					</execution>					
 				</executions>
 			</plugin>
 			<plugin>
