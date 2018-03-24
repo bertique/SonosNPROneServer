@@ -1,7 +1,5 @@
 package me.michaeldick.npr.model;
 
-import java.util.HashMap;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -20,10 +18,11 @@ public class Media {
     String date;
     String description;
     Rating rating;
-    HashMap<String,String> webLinks;
-    HashMap<String,String> audioLinks;
-    HashMap<String,String> imageLinks;
-    HashMap<String,String> recommendations;
+    String webLink;
+    String audioLink;
+    String imageLinkSquare;
+    String imageLinkLogoSquare;
+    String recommendationLink;
 	String affiliation;
     String affiliationId;
 	String affiliationMetaHref;
@@ -53,29 +52,36 @@ public class Media {
     	
     	JsonObject links = data.getAsJsonObject("links");
     	if(links.has("web")) {
-    		webLinks = new HashMap<String, String>();
-    		for(JsonElement el : links.get("web").getAsJsonArray()) {    			
-    			webLinks.put(el.getAsJsonObject().get("content-type").getAsString(), el.getAsJsonObject().get("href").getAsString());
+    		for(JsonElement el : links.get("web").getAsJsonArray()) {    	
+    			if(el.getAsJsonObject().get("content-type").getAsString().equals("text/html")) {
+        			webLink = el.getAsJsonObject().get("href").getAsString();
+        			break;    				
+    			}
     		}    		    	
     	}  
     	if(links.has("image")) {  
-    		imageLinks = new HashMap<String, String>();
     		for(JsonElement el : links.get("image").getAsJsonArray()) { 
-    			if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href"))
-    			imageLinks.put(el.getAsJsonObject().get("rel").getAsString(), el.getAsJsonObject().get("href").getAsString());
+    			if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href") && el.getAsJsonObject().get("rel").getAsString().equals("square"))
+    				imageLinkSquare = el.getAsJsonObject().get("href").getAsString();
+    			else if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href") && el.getAsJsonObject().get("rel").getAsString().equals("logo_square"))
+    				imageLinkLogoSquare = el.getAsJsonObject().get("href").getAsString();
     		}    		    	
     	} 
     	if(links.has("audio")) { 
-    		audioLinks = new HashMap<String, String>();
-    		for(JsonElement el : links.get("audio").getAsJsonArray()) {    			
-    			audioLinks.put(el.getAsJsonObject().get("content-type").getAsString(), el.getAsJsonObject().get("href").getAsString());
+    		for(JsonElement el : links.get("audio").getAsJsonArray()) {
+    			if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/mp3") && !el.getAsJsonObject().get("href").getAsString().endsWith(".mp4")) {			
+    				audioLink = el.getAsJsonObject().get("href").getAsString();
+    				break;
+    			}		
+    			else if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/aac") && el.getAsJsonObject().get("href").getAsString().endsWith(".mp3")) {    					
+    				audioLink = el.getAsJsonObject().get("href").getAsString();
+    				break;
+    				
+    			}    			
     		}    		    	
     	} 
-    	if(links.has("recommendations")) {    	
-    		recommendations = new HashMap<String, String>();
-    		for(JsonElement el : links.get("recommendations").getAsJsonArray()) {    			
-    			recommendations.put(el.getAsJsonObject().get("content-type").getAsString(), el.getAsJsonObject().get("href").getAsString());
-    		}    		    	
+    	if(links.has("recommendations") && links.get("recommendations").getAsJsonArray().size() > 0) {    	    		    			
+    			recommendationLink = links.get("recommendations").getAsJsonArray().get(0).getAsJsonObject().get("href").getAsString();    		    	
     	}        	    	    
     }
 
@@ -123,20 +129,24 @@ public class Media {
 		return rating;
 	}
 
-	public HashMap<String, String> getWebLinks() {
-		return webLinks;
+	public String getWebLink() {
+		return webLink;
 	}
 
-	public HashMap<String, String> getAudioLinks() {
-		return audioLinks;
+	public String getAudioLink() {
+		return audioLink;
 	}
 
-	public HashMap<String, String> getImageLinks() {
-		return imageLinks;
+	public String getImageLinkSquare() {
+		return imageLinkSquare;
+	}
+	
+	public String getImageLinkLogoSquare() {
+		return imageLinkLogoSquare;
 	}
 
-	public HashMap<String, String> getRecommendations() {
-		return recommendations;
+	public String getRecommendationLink() {
+		return recommendationLink;
 	}
 
 	public String getAffiliation() {
