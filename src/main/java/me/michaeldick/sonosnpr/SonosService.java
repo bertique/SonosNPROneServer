@@ -293,7 +293,7 @@ public class SonosService implements SonosSoap {
 				List<Rating> list = new ArrayList<Rating>();
 				list.add(new Rating(m.getRating()));
 				RatingCache.put(auth.getUserId(), list);					 					 
-				sendRecommendations(ratingList, m.getRecommendations().get("application/json"), auth);												
+				sendRecommendations(ratingList, m.getRecommendationLink(), auth);												
 			}	 		
 		}
 		ReportPlaySecondsResult result = new ReportPlaySecondsResult();
@@ -582,12 +582,8 @@ public class SonosService implements SonosSoap {
 		
 		Media m = ListeningResponseCache.getIfPresent(auth.getUserId()+id);
 		if(m != null) {
-			if(m.getAudioLinks().containsKey("audio/mp3") && !m.getAudioLinks().get("audio/mp3").endsWith(".mp4")) {			
-				getMediaURIResult.value = m.getAudioLinks().get("audio/mp3");				
-			}		
-			else if(m.getAudioLinks().containsKey("audio/aac") && m.getAudioLinks().get("audio/aac").endsWith(".mp3")) {
-				getMediaURIResult.value =  m.getAudioLinks().get("audio/aac");
-				
+			if(m.getAudioLink() != null) {			
+				getMediaURIResult.value = m.getAudioLink();				
 			} else {
 				logger.debug("Item not found");				
 				throwSoapFault(ITEM_NOT_FOUND);
@@ -1133,9 +1129,9 @@ public class SonosService implements SonosSoap {
 			mc.setCanPlay(true);
 			mc.setCanEnumerate(true);
 			
-			if(audio.getImageLinks() != null) {
+			if(audio.getImageLinkSquare() != null) {
 				logger.debug("Album art found");
-				String albumArtUrlString = audio.getImageLinks().get("square");
+				String albumArtUrlString = audio.getImageLinkSquare();
 				if(albumArtUrlString != null) {
 					AlbumArtUrl albumArtUrl = new AlbumArtUrl();
 					albumArtUrl.setValue(albumArtUrlString);
@@ -1150,9 +1146,9 @@ public class SonosService implements SonosSoap {
 			mc.setCanPlay(false);
 			mc.setCanEnumerate(true);	
 			
-			if(agg.getImageLinks() != null) {
+			if(agg.getImageLinkLogoSquare() != null) {
 				logger.debug("Album art found");
-				String albumArtUrlString = agg.getImageLinks().get("logo_square");
+				String albumArtUrlString = agg.getImageLinkLogoSquare();
 				if(albumArtUrlString != null) {
 					AlbumArtUrl albumArtUrl = new AlbumArtUrl();
 					albumArtUrl.setValue(albumArtUrlString);
@@ -1172,18 +1168,9 @@ public class SonosService implements SonosSoap {
 		
 		mmd.setId(m.getUid());
 		
-		if(m.getAudioLinks() != null) {
-			// Just allowing mp3's for now
-			if(m.getAudioLinks().containsKey("audio/mp3") && !m.getAudioLinks().get("audio/mp3").endsWith(".mp4")) {							
-				mmd.setMimeType("audio/mp3");
-			}		
-			else if(m.getAudioLinks().containsKey("audio/aac") && m.getAudioLinks().get("audio/aac").endsWith(".mp3")) {				
-				mmd.setMimeType("audio/mp3");
-			} 			
-			else {
-				logger.debug("No mp3 links found");
-				return null;
-			}
+		if(m.getAudioLink() != null) {
+			// Just allowing mp3's for now						
+			mmd.setMimeType("audio/mp3");
 		} else {
 			logger.debug("No audio links found");
 			return null;
@@ -1207,9 +1194,9 @@ public class SonosService implements SonosSoap {
 		tmd.setCanSkip(m.isSkippable());		
 		tmd.setArtist(m.getProgram());
 				
-		if(m.getImageLinks() != null) {
+		if(m.getImageLinkSquare() != null) {
 			logger.debug("Album art found");
-			String albumArtUrlString = m.getImageLinks().get("square");
+			String albumArtUrlString = m.getImageLinkSquare();
 			if(albumArtUrlString != null) {
 				AlbumArtUrl albumArtUrl = new AlbumArtUrl();
 				albumArtUrl.setValue(albumArtUrlString);
