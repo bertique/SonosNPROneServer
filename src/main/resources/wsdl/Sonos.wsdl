@@ -2,8 +2,7 @@
 
 <!--
    Sonos Music Service WSDL definition
-   ver. 1.15.2
-   Copyright (c) 2007-2017 Sonos, Inc. All Rights Reserved
+   Copyright (c) 2007-2016 Sonos, Inc. All Rights Reserved
 
    This document is licensed under the Creative Commons Attribution, Share-Alike
    license, v3.0 (Unported) with the following modifications:
@@ -245,7 +244,7 @@
                 <xs:sequence>
                     <xs:element ref="tns:id"/>
                     <xs:element ref="tns:itemType"/>
-                    <xs:element name="displayType" type="xs:string"/>
+                    <xs:element name="displayType" type="xs:string" minOccurs="0"/>
                     <xs:element name="title" type="xs:string"/>
 
                     <!--
@@ -569,6 +568,7 @@
             <xs:complexType name="tagsData">
                 <xs:sequence>
                     <xs:element name="explicit" type="xs:int" minOccurs="0" maxOccurs="1"/>
+                    <xs:element name="premium" type="xs:int" minOccurs="0" maxOccurs="1"/>
                 </xs:sequence>
             </xs:complexType>
 
@@ -737,6 +737,7 @@
                 <xs:restriction base="xs:string">
                     <xs:enumeration value="openUrl"/>
                     <xs:enumeration value="simpleHttpRequest"/>
+                    <xs:enumeration value="rateItem"/>
                 </xs:restriction>
             </xs:simpleType>
 
@@ -749,6 +750,7 @@
                     <xs:choice>
                         <xs:element name="openUrlAction" type="tns:openUrlAction"/>
                         <xs:element name="simpleHttpRequestAction" type="tns:simpleHttpRequestAction"/>
+                        <xs:element name="rateItemAction" type="tns:rateItemAction"/>
                     </xs:choice>
                     <xs:element name="successMessageStringId" type="xs:string" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="failureMessageStringId" type="xs:string" minOccurs="0" maxOccurs="1"/>
@@ -767,6 +769,13 @@
                     <xs:element name="method" type="xs:string"/>
                     <xs:element name="httpHeaders" type="tns:httpHeaders" minOccurs="0" maxOccurs="1"/>
                     <xs:element name="refreshOnSuccess" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="rateItemAction">
+                <xs:sequence>
+                    <xs:element ref="tns:rateItem"/>
+                    <xs:element name="shouldSkip" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
                 </xs:sequence>
             </xs:complexType>
 
@@ -1313,7 +1322,7 @@
                 </xs:complexType>
             </xs:element>
 
-            <xs:element name="customFaultDetail">
+            <xs:element name="customFault">
                 <xs:complexType>
                     <xs:choice>
                         <xs:sequence>
@@ -1572,7 +1581,7 @@
     </wsdl:message>
 
     <wsdl:message name="customFault">
-        <wsdl:part name="customFault" element="tns:customFaultDetail"/>
+       <wsdl:part name="customFault" element="tns:customFault"/>
     </wsdl:message>
 
     <wsdl:portType name="SonosSoap">
