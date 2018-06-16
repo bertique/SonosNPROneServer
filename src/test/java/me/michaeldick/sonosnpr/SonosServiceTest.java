@@ -65,7 +65,9 @@ public class SonosServiceTest {
 	        }	        	       
 	        
 	        server = new HttpTestServer();
-	        server.start();	        	    
+	        server.start();
+	        
+	        service = new SonosService(properties);
 	}
 	
 	@AfterClass
@@ -73,14 +75,9 @@ public class SonosServiceTest {
 		server.stop();
 	}
 	
-	@Before
-	public void setupTest() {
-		service = new SonosService(properties);
-	}
-	
 	@Test
 	public void testSonosService() {		
-		new SonosService();
+		//new SonosService();
 	}
 
 	@Ignore
