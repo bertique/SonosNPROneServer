@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+require "sequel"
+DB = Sequel.connect ENV["DATABASE_URL"]
+cutoff = Time.now - 60*60*24
+puts "Cleaning old sessions before "+cutoff.strftime("%FT%R")+"..."
+puts "listeningresponsecache: " + DB[:listeningresponsecache].where(Sequel[:lastupdated] < cutoff).delete.to_s
+puts "ratingcache: " + DB[:ratingcache].where(Sequel[:lastupdated] < cutoff).delete.to_s
+puts "responsetoplayer: " + DB[:responsetoplayer].where(Sequel[:lastupdated] < cutoff).delete.to_s
+puts "done."
