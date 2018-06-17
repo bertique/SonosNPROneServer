@@ -15,4 +15,4 @@ addons:
 env:
   global:
   - PGPORT=5433
-  - DATABASE_URL="postgresql://travis:travis@localhost:5433/sonosnprone"
+  - DATABASE_URL="postgres://travis:travis@localhost:5433/sonosnprone"
