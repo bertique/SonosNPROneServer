@@ -35,7 +35,7 @@ public class SonosServiceCache {
 		try {
 			URI dbUri = new URI(DATABASE_URL);
 		
-			dbUrl = "jdbc:postgresql://" + dbUri.getHost() + dbUri.getPath();
+			dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ":"+ dbUri.getPort() + dbUri.getPath();
 			connectionPool = new BasicDataSource();
 		
 			if (dbUri.getUserInfo() != null) {
