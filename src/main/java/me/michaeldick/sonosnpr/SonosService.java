@@ -107,32 +107,32 @@ import me.michaeldick.npr.model.RatingsList;
 @WebService
 public class SonosService implements SonosSoap {
 
-	public static String NPR_CLIENT_ID = "";
-	public static String NPR_CLIENT_SECRET = "";		
+	private static String NPR_CLIENT_ID = "";
+	private static String NPR_CLIENT_SECRET = "";		
 	
-	public static String MIXPANEL_PROJECT_TOKEN = "";
+	private static String MIXPANEL_PROJECT_TOKEN = "";
 	
-	public static String JDBC_DATABASE_URL = "";
+	public static String DATABASE_URL = "";
 	
-	public static final String PROGRAM = "program";
-    public static final String DEFAULT = "default";
-    public static final String HISTORY = "history";
-    public static final String PODCAST = "podcasts";
-    public static final String AGGREGATION = "aggregation";
-    public static final String MUSIC = "music";
-    public static final String SESSIONIDTOKEN = "###";
+	private static final String PROGRAM = "program";
+	private static final String DEFAULT = "default";
+    private static final String HISTORY = "history";
+    private static final String PODCAST = "podcasts";
+    private static final String AGGREGATION = "aggregation";
+    private static final String MUSIC = "music";
+    private static final String SESSIONIDTOKEN = "###";
 
     // Error codes
-    public static final String SESSION_INVALID = "Client.SessionIdInvalid";
-    public static final String LOGIN_INVALID = "Client.LoginInvalid";
-    public static final String SERVICE_UNKNOWN_ERROR = "Client.ServiceUnknownError";
-    public static final String SERVICE_UNAVAILABLE = "Client.ServiceUnavailable";
-    public static final String ITEM_NOT_FOUND = "Client.ItemNotFound"; 
-    public static final String AUTH_TOKEN_EXPIRED = "Client.AuthTokenExpired";
-    public static final String NOT_LINKED_RETRY = "Client.NOT_LINKED_RETRY";
-    public static final String NOT_LINKED_FAILURE = "Client.NOT_LINKED_FAILURE";
+    private static final String SESSION_INVALID = "Client.SessionIdInvalid";
+    private static final String LOGIN_INVALID = "Client.LoginInvalid";
+    private static final String SERVICE_UNKNOWN_ERROR = "Client.ServiceUnknownError";
+    private static final String SERVICE_UNAVAILABLE = "Client.ServiceUnavailable";
+    private static final String ITEM_NOT_FOUND = "Client.ItemNotFound"; 
+    private static final String AUTH_TOKEN_EXPIRED = "Client.AuthTokenExpired";
+    private static final String NOT_LINKED_RETRY = "Client.NOT_LINKED_RETRY";
+    private static final String NOT_LINKED_FAILURE = "Client.NOT_LINKED_FAILURE";
 	
-    public static final String PLAYSTATUS_SKIPPED = "skippedTrack";      
+    private static final String PLAYSTATUS_SKIPPED = "skippedTrack";      
     private static final String RATING_ISINTERESTING = "isliked";
 
     //private static final String IDENTITY_API_URI_DEFAULT = "https://api.npr.org/identity/v2/user";
@@ -147,7 +147,13 @@ public class SonosService implements SonosSoap {
     private static boolean isDebug = false;
     private static int NUMBER_OF_STORIES_PER_CALL = 3;
 
-    // Disable severe log message for SoapFault
+    private SonosServiceCache cache;
+    
+    public SonosServiceCache getCache() {
+		return cache;
+	}
+
+	// Disable severe log message for SoapFault
     private static java.util.logging.Logger COM_ROOT_LOGGER = java.util.logging.Logger.getLogger("com.sun.xml.internal.messaging.saaj.soap.ver1_1");
     private static Logger logger = Logger.getLogger(SonosService.class.getSimpleName());
     private static MessageBuilder messageBuilder;
@@ -171,9 +177,10 @@ public class SonosService implements SonosSoap {
     	
     	MIXPANEL_PROJECT_TOKEN = conf.getProperty("MIXPANEL_PROJECT_TOKEN", System.getenv("MIXPANEL_PROJECT_TOKEN"));
     	
-    	JDBC_DATABASE_URL = conf.getProperty("JDBC_DATABASE_URL", System.getenv("JDBC_DATABASE_URL"));
+    	DATABASE_URL = conf.getProperty("DATABASE_URL", System.getenv("DATABASE_URL"));
     	    	
-    	SonosServiceCache.initializeDb(JDBC_DATABASE_URL);
+    	cache = new SonosServiceCache(DATABASE_URL);
+    	cache.initializeDb();
     	initializeMetrics();
     	
     	COM_ROOT_LOGGER.setLevel(java.util.logging.Level.OFF);
@@ -190,9 +197,10 @@ public class SonosService implements SonosSoap {
     	
     	MIXPANEL_PROJECT_TOKEN = System.getenv("MIXPANEL_PROJECT_TOKEN");
     	
-    	JDBC_DATABASE_URL = System.getenv("JDBC_DATABASE_URL");
+    	DATABASE_URL = System.getenv("DATABASE_URL");
     	    	
-    	SonosServiceCache.initializeDb(JDBC_DATABASE_URL);
+    	cache = new SonosServiceCache(DATABASE_URL);
+    	cache.initializeDb();
     	initializeMetrics();
     	
     	COM_ROOT_LOGGER.setLevel(java.util.logging.Level.OFF);
@@ -225,7 +233,7 @@ public class SonosService implements SonosSoap {
 		NprAuth auth = getNprAuth();
 				
 		GetExtendedMetadataResponse response = new GetExtendedMetadataResponse();		
-		Media m = SonosServiceCache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId());
+		Media m = cache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId());
 		
         if (m != null) {
         	logger.debug("ListeningResponseCache hit");
@@ -255,7 +263,7 @@ public class SonosService implements SonosSoap {
 		if(seconds <= 1) {
 			NprAuth auth = getNprAuth();
 													
-			List<Rating> ratingList = SonosServiceCache.getRatingIfPresent(auth.getUserId());
+			List<Rating> ratingList = cache.getRatingIfPresent(auth.getUserId());
 			
 			if(ratingList == null) {
 				logger.debug("ratingList is empty");
@@ -270,7 +278,7 @@ public class SonosService implements SonosSoap {
 				}
 			}		
 	
-			Media media = SonosServiceCache.getListeningResponseIfPresent(auth.getUserId()+id);			
+			Media media = cache.getListeningResponseIfPresent(auth.getUserId()+id);			
 			if(media != null) {
 				Media m = media;
 				logger.debug("media cache hit");
@@ -278,7 +286,7 @@ public class SonosService implements SonosSoap {
 				ratingList.add(new Rating(m.getRating()));
 				List<Rating> list = new ArrayList<Rating>();
 				list.add(new Rating(m.getRating()));
-				SonosServiceCache.putRating(auth.getUserId(), list);					 					 
+				cache.putRating(auth.getUserId(), list);					 					 
 				sendRecommendations(ratingList, m.getRecommendationLink(), auth);
 			}	 		
 		}
@@ -300,7 +308,7 @@ public class SonosService implements SonosSoap {
 
 		NprAuth auth = getNprAuth();
 				
-		List<Rating> list = SonosServiceCache.getRatingIfPresent(auth.getUserId());			
+		List<Rating> list = cache.getRatingIfPresent(auth.getUserId());			
 		if(list != null) {
 			logger.debug("RatingCache hit");
 			boolean alreadyThumbed = false;
@@ -316,7 +324,7 @@ public class SonosService implements SonosSoap {
 						Rating rnew = new Rating(r);
 						rnew.setRating(RatingsList.THUMBUP);
 						list.add(rnew);
-						SonosServiceCache.putRating(auth.getUserId(), list);
+						cache.putRating(auth.getUserId(), list);
 						Gson gson = new GsonBuilder().create();
 						logger.debug("Rating cache:"+gson.toJson(list));
 						break;
@@ -325,11 +333,11 @@ public class SonosService implements SonosSoap {
 			}
 		}		
 		
-		Media media = SonosServiceCache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId());
+		Media media = cache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId());
 		if(media != null) {
 			Media ratedItem = media;
 			ratedItem.getRating().setRating(RatingsList.THUMBUP);
-			SonosServiceCache.putListeningResponse(auth.getUserId()+parameters.getId(), media);
+			cache.putListeningResponse(auth.getUserId()+parameters.getId(), media);
 		}
 		
 		ItemRating rating = new ItemRating();
@@ -371,19 +379,19 @@ public class SonosService implements SonosSoap {
 
 		NprAuth auth = getNprAuth();
 		
-		List<Rating> list = SonosServiceCache.getRatingIfPresent(auth.getUserId());			
+		List<Rating> list = cache.getRatingIfPresent(auth.getUserId());			
 		if(list != null) {
 			logger.debug("RatingCache hit");
 			for(Rating r : list) {
 				if(r.getMediaId().equals(id)) {
 					logger.debug("Setting seconds");
 					r.setElapsed(seconds);
-					SonosServiceCache.putRating(auth.getUserId(), list);
+					cache.putRating(auth.getUserId(), list);
 					break;
 				}
 			}		
 		}
-		SonosServiceCache.invalidateListeningResponse(auth.getUserId()+id);
+		cache.invalidateListeningResponse(auth.getUserId()+id);
 	}
 
 	@Override
@@ -394,7 +402,7 @@ public class SonosService implements SonosSoap {
 		
 		LastUpdate response = new LastUpdate();
 		
-		List<Rating> list = SonosServiceCache.getRatingIfPresent(auth.getUserId());				
+		List<Rating> list = cache.getRatingIfPresent(auth.getUserId());				
 		if(list != null) 
 			response.setFavorites(Integer.toString(list.hashCode()));
 		else
@@ -566,7 +574,7 @@ public class SonosService implements SonosSoap {
 		
 		NprAuth auth = getNprAuth();	
 		
-		Media m = SonosServiceCache.getListeningResponseIfPresent(auth.getUserId()+id);
+		Media m = cache.getListeningResponseIfPresent(auth.getUserId()+id);
 		if(m != null) {
 			if(m.getAudioLink() != null) {			
 				getMediaURIResult.value = m.getAudioLink();				
@@ -588,7 +596,7 @@ public class SonosService implements SonosSoap {
 		NprAuth auth = getNprAuth();
 				
 		GetMediaMetadataResponse response = new GetMediaMetadataResponse();		
-		Media m = SonosServiceCache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId());
+		Media m = cache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId());
 		
         if (m != null) {
         	logger.debug("ListeningResponseCache hit");
@@ -646,7 +654,7 @@ public class SonosService implements SonosSoap {
 			response.setGetMetadataResult(getChannel(auth, parameters.getId().replaceAll(SonosService.PROGRAM+":", "")));		
 		} else if(parameters.getId().startsWith(SonosService.PODCAST)) {
 			MediaList ml = getProgram(auth);
-			Media m = SonosServiceCache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId().replaceAll(SonosService.PODCAST+":", ""));
+			Media m = cache.getListeningResponseIfPresent(auth.getUserId()+parameters.getId().replaceAll(SonosService.PODCAST+":", ""));
 			if (m != null) {
 				ml.getMediaCollectionOrMediaMetadata().add(0, buildMMD(m));			
 				ml.setCount(ml.getCount()+1);
@@ -866,19 +874,19 @@ public class SonosService implements SonosSoap {
 		
 		if(status.equals(PLAYSTATUS_SKIPPED)) {
 			logger.debug("PlayStatus is skipped");
-			List<Rating> list = SonosServiceCache.getRatingIfPresent(auth.getUserId());			
+			List<Rating> list = cache.getRatingIfPresent(auth.getUserId());			
 			if(list != null) {
 				logger.debug("Cache hit");
 				for(Rating r : list) {
 					if(r.getMediaId().equals(id)) {
 						r.setRating(RatingsList.SKIP);
-						SonosServiceCache.putRating(auth.getUserId(), list);
+						cache.putRating(auth.getUserId(), list);
 						logger.debug("Rating set");
 						break;
 					}
 				}
 			}
-			SonosServiceCache.invalidateListeningResponse(auth.getUserId()+id);
+			cache.invalidateListeningResponse(auth.getUserId()+id);
 		}
 	}
 
@@ -923,7 +931,7 @@ public class SonosService implements SonosSoap {
 	
 	// Private methods
 	
-	private static MediaList getProgram(NprAuth auth) {							
+	private MediaList getProgram(NprAuth auth) {							
 		MediaList ml = new MediaList();
     	List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();		
 					
@@ -934,7 +942,7 @@ public class SonosService implements SonosSoap {
 	        
 		JsonArray searchResultList = element.getAsJsonObject().getAsJsonArray("items");		
         
-		List<String> lastProgramCall = SonosServiceCache.getLastPlayerResponse(auth.getUserId());
+		List<String> lastProgramCall = cache.getLastPlayerResponse(auth.getUserId());
 		
         if (searchResultList == null)
         	return new MediaList(); 
@@ -959,7 +967,7 @@ public class SonosService implements SonosSoap {
 				}
 				newPlayQueue.add(mmd.getId());
 				logger.debug("adding track id: "+mmd.getId());
-				SonosServiceCache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
+				cache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
 			}
 		}	        		
 		
@@ -967,7 +975,7 @@ public class SonosService implements SonosSoap {
 		ml.setIndex(0);
 		ml.setTotal(mcList.size());				
     	logger.debug("Got program list: "+mcList.size());
-    	SonosServiceCache.putLastPlayerResponse(auth.getUserId(), newPlayQueue);
+    	cache.putLastPlayerResponse(auth.getUserId(), newPlayQueue);
 			
     	return ml;                			
 	}
@@ -997,17 +1005,17 @@ public class SonosService implements SonosSoap {
 		return json;
 	}
 	
-	private static MediaList getChannel(NprAuth auth, String channel) {		
+	private MediaList getChannel(NprAuth auth, String channel) {		
 		String json = nprApiGetRequest("recommendations", "channel", channel, auth);						
 		return parseMediaListResponse(auth.getUserId(), json);						
 	}
 	
-	private static MediaList getHistory(NprAuth auth) {		
+	private MediaList getHistory(NprAuth auth) {		
 		String json = nprApiGetRequest("history", null, null, auth);				
 		return parseMediaListResponse(auth.getUserId(), json);						
 	}
 
-	private static MediaList parseMediaListResponse(String userId, String json) {
+	private MediaList parseMediaListResponse(String userId, String json) {
 		JsonParser parser = new JsonParser();
 		JsonElement element = parser.parse(json);
 	        
@@ -1036,7 +1044,7 @@ public class SonosService implements SonosSoap {
 						if(!doesExist) {
 							mcList.add(buildMC(m));
 							logger.debug("adding track id: "+mmd.getId());
-							SonosServiceCache.putListeningResponse(userId+mmd.getId(), m);
+							cache.putListeningResponse(userId+mmd.getId(), m);
 						} else {
 							logger.debug("tracking existing in cache: "+mmd.getId());
 						}					
@@ -1053,7 +1061,7 @@ public class SonosService implements SonosSoap {
         }
 	}
 	
-	private static MediaList getAggregation(String id, NprAuth auth) {
+	private MediaList getAggregation(String id, NprAuth auth) {
 		String json = nprApiGetRequest("aggregation/"+id+"/recommendations", "startNum", "0", auth);		
 		
 		return parseMediaListResponse(auth.getUserId(), json);
@@ -1146,7 +1154,7 @@ public class SonosService implements SonosSoap {
 		return mc;
 	}
 	
-	private static MediaMetadata buildMMD(Media m) {
+	private MediaMetadata buildMMD(Media m) {
 		MediaMetadata mmd = new MediaMetadata();
 		TrackMetadata tmd = new TrackMetadata();
 		if(m==null)

@@ -1,5 +1,6 @@
 package me.michaeldick.sonosnpr;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,6 +10,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
@@ -26,24 +28,38 @@ public class SonosServiceCache {
 
     private static Logger logger = Logger.getLogger(SonosService.class.getSimpleName());
 	
-	private static String JDBC_DATABASE_URL = "";
+    private BasicDataSource connectionPool;
 	
-	public static void setDatabaseUrl(String dbUrl) {
-		JDBC_DATABASE_URL = dbUrl;
-	}	
+	public SonosServiceCache (String DATABASE_URL) {		
+		String dbUrl = "";
+		try {
+			URI dbUri = new URI(DATABASE_URL);
+		
+			dbUrl = "jdbc:postgresql://" + dbUri.getHost() + dbUri.getPath();
+			connectionPool = new BasicDataSource();
+		
+			if (dbUri.getUserInfo() != null) {
+			  connectionPool.setUsername(dbUri.getUserInfo().split(":")[0]);
+			  connectionPool.setPassword(dbUri.getUserInfo().split(":")[1]);
+			}
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		connectionPool.setDriverClassName("org.postgresql.Driver");
+		connectionPool.setUrl(dbUrl);
+		connectionPool.setInitialSize(1);
+	}
 	
-    private static Connection getConnection() throws URISyntaxException, SQLException {
-        String dbUrl = JDBC_DATABASE_URL;
-        return DriverManager.getConnection(dbUrl);
+    private Connection getConnection() throws URISyntaxException, SQLException {
+        return connectionPool.getConnection();
     }
 	
-	public static void initializeDb(String dbUrl) {
-		JDBC_DATABASE_URL = dbUrl;
+	public void initializeDb() {
 		
 		Connection c;
 		try {
 			c = getConnection();
-			
 			PreparedStatement listeningResponseCachePs = c.prepareStatement("CREATE TABLE IF NOT EXISTS ListeningResponseCache("
 					+ "userid VARCHAR PRIMARY KEY, "
 					+ "lastUpdated TIMESTAMP DEFAULT NOW(), "
@@ -64,6 +80,7 @@ public class SonosServiceCache {
 					+ "jsonBlob JSON)");	    				
 			lastResponseToPlayerPs.executeUpdate();
 			lastResponseToPlayerPs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -73,7 +90,7 @@ public class SonosServiceCache {
 		}    
 	}
 	
-	public static void resetDb() {
+	public void resetDb() {
 		Connection c;
 		try {
 			c = getConnection();
@@ -89,6 +106,7 @@ public class SonosServiceCache {
 			PreparedStatement lastResponseToPlayerPs = c.prepareStatement("DROP TABLE ResponseToPlayer");			
 			lastResponseToPlayerPs.executeUpdate();
 			lastResponseToPlayerPs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -98,7 +116,7 @@ public class SonosServiceCache {
 		}    
 	}
 		
-	public static Media getListeningResponseIfPresent(String id) {		
+	public Media getListeningResponseIfPresent(String id) {		
 		Connection c;
 		try {
 			c = getConnection();
@@ -110,9 +128,11 @@ public class SonosServiceCache {
 				Gson gson = new Gson();  
 				Media m = gson.fromJson(rs.getString(1), Media.class);  
 		        listeningResponseCachePs.close();
+		        c.close();
 				return(m);
 			} else {
 				listeningResponseCachePs.close();
+				c.close();
 				return null;
 			}
 						
@@ -127,7 +147,7 @@ public class SonosServiceCache {
 		} 		
 	}
 	
-	public static void putListeningResponse(String id, Media m) {
+	public void putListeningResponse(String id, Media m) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -147,6 +167,7 @@ public class SonosServiceCache {
 			
 			listeningResponseCachePs.executeUpdate();
 			listeningResponseCachePs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
@@ -156,7 +177,7 @@ public class SonosServiceCache {
 		} 		
 	}
 	
-	public static void invalidateListeningResponse(String id) {
+	public void invalidateListeningResponse(String id) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -167,6 +188,7 @@ public class SonosServiceCache {
 			
 			listeningResponseCachePs.executeUpdate();
 			listeningResponseCachePs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
@@ -176,7 +198,7 @@ public class SonosServiceCache {
 		} 		
 	}
 	
-	public static List<Rating> getRatingIfPresent(String id) {
+	public List<Rating> getRatingIfPresent(String id) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -187,10 +209,12 @@ public class SonosServiceCache {
 			if(rs.next()) {
 				Gson gson = new Gson();				
 				List<Rating> lr = gson.fromJson(rs.getString(1), new TypeToken<ArrayList<Rating>>(){}.getType());				
-		        listeningResponseCachePs.close();       		        
+		        listeningResponseCachePs.close();  
+		        c.close();
 				return(lr);
 			} else {
 				listeningResponseCachePs.close();
+				c.close();
 				return null;
 			}
 						
@@ -205,7 +229,7 @@ public class SonosServiceCache {
 		} 	
 	}
 	
-	public static void putRating(String id, List<Rating> r) {
+	public void putRating(String id, List<Rating> r) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -225,6 +249,7 @@ public class SonosServiceCache {
 			listeningResponseCachePs.setObject(2, gson.toJson(r));			
 			listeningResponseCachePs.executeUpdate();
 			listeningResponseCachePs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
@@ -234,7 +259,7 @@ public class SonosServiceCache {
 		} 
 	}
 	
-	public static void invalidateRatings(String id) {
+	public void invalidateRatings(String id) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -245,6 +270,7 @@ public class SonosServiceCache {
 			
 			listeningResponseCachePs.executeUpdate();
 			listeningResponseCachePs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
@@ -254,7 +280,7 @@ public class SonosServiceCache {
 		} 		
 	}
 
-	public static List<String> getLastPlayerResponse(String id) {
+	public List<String> getLastPlayerResponse(String id) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -265,10 +291,12 @@ public class SonosServiceCache {
 			if(rs.next()) {
 				Gson gson = new Gson();				
 				List<String> m = gson.fromJson(rs.getString(1), new TypeToken<ArrayList<String>>(){}.getType());							
-		        listeningResponseCachePs.close();		      
+		        listeningResponseCachePs.close();	
+		        c.close();
 				return(m);
 			} else {
 				listeningResponseCachePs.close();
+				c.close();
 				return null;
 			}
 						
@@ -283,7 +311,7 @@ public class SonosServiceCache {
 		} 				
 	}
 	
-	public static void putLastPlayerResponse(String id, List<String> m) {
+	public void putLastPlayerResponse(String id, List<String> m) {
 		Connection c;
 		try {
 			c = getConnection();
@@ -302,6 +330,7 @@ public class SonosServiceCache {
 			
 			listeningResponseCachePs.executeUpdate();
 			listeningResponseCachePs.close();
+			c.close();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			

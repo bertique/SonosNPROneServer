@@ -15,4 +15,4 @@ addons:
 env:
   global:
   - PGPORT=5433
-  - JDBC_DATABASE_URL="jdbc:postgresql://localhost:5433/sonosnprone?user=travis&password=travis"
+  - DATABASE_URL="postgresql://travis:travis@localhost:5433/sonosnprone"

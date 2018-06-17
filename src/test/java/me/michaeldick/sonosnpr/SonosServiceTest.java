@@ -110,8 +110,8 @@ public class SonosServiceTest {
 
 	@Test
 	public void testReportPlaySeconds() throws CustomFault {
-		SonosServiceCache.invalidateListeningResponse("[householdid]");
-		SonosServiceCache.invalidateRatings("[householdid]");
+		service.getCache().invalidateListeningResponse("[householdid]");
+		service.getCache().invalidateRatings("[householdid]");
 		testGetMetadata();		
 		
 		// Start first
