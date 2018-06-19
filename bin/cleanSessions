@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require_relative "sequel"
+require "sequel"
 DB = Sequel.connect ENV["DATABASE_URL"]
 cutoff = Time.now - 60*60*24
 puts "Cleaning old sessions before "+cutoff.strftime("%FT%R")+"..."
