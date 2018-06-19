@@ -1,0 +1,13 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    sequel (5.9.0)
+
+PLATFORMS
+  x64-mingw32
+
+DEPENDENCIES
+  sequel (~> 5.9)
+
+BUNDLED WITH
+   1.16.2
