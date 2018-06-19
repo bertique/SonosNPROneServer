@@ -4,7 +4,7 @@ GEM
     sequel (5.9.0)
 
 PLATFORMS
-  x64-mingw32
+  
 
 DEPENDENCIES
   sequel (~> 5.9)
