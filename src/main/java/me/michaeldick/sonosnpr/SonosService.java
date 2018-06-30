@@ -145,7 +145,7 @@ public class SonosService implements SonosSoap {
     private static String DEVICE_LINK_URI;
     private static String DEVICE_TOKEN_URI;
     private static boolean isDebug = false;
-    private static int NUMBER_OF_STORIES_PER_CALL = 3;
+    private static int NUMBER_OF_STORIES_PER_CALL = 4;
 
     private SonosServiceCache cache;
     
