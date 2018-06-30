@@ -202,7 +202,6 @@ public class SonosServiceCache {
 		Connection c;
 		try {
 			c = getConnection();
-			logger.error("We hit it before"+id);
 			PreparedStatement listeningResponseCachePs = c.prepareStatement("SELECT jsonBlob FROM RatingCache WHERE userid = ?");
 			listeningResponseCachePs.setString(1, id);
 			ResultSet rs = listeningResponseCachePs.executeQuery();			
@@ -284,7 +283,6 @@ public class SonosServiceCache {
 		Connection c;
 		try {
 			c = getConnection();
-			logger.error("We hit it before"+id);
 			PreparedStatement listeningResponseCachePs = c.prepareStatement("SELECT jsonBlob FROM ResponseToPlayer WHERE userid = ?");
 			listeningResponseCachePs.setString(1, id);
 			ResultSet rs = listeningResponseCachePs.executeQuery();			
