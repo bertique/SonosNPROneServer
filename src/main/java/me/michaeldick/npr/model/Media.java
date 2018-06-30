@@ -73,7 +73,7 @@ public class Media {
     				audioLink = el.getAsJsonObject().get("href").getAsString();
     				break;
     			}		
-    			else if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/aac") && el.getAsJsonObject().get("href").getAsString().endsWith(".mp3")) {    					
+    			else if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/aac")) {    					
     				audioLink = el.getAsJsonObject().get("href").getAsString();
     				break;
     				

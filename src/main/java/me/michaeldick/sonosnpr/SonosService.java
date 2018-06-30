@@ -1160,9 +1160,10 @@ public class SonosService implements SonosSoap {
 		
 		mmd.setId(m.getUid());
 		
-		if(m.getAudioLink() != null) {
-			// Just allowing mp3's for now						
+		if(m.getAudioLink() != null && m.getAudioLink().contains("mp3")) {
 			mmd.setMimeType("audio/mp3");
+		} else if (m.getAudioLink() != null && (m.getAudioLink().contains("mp4") || m.getAudioLink().contains("aac"))) {
+			mmd.setMimeType("audio/aac");					
 		} else {
 			logger.debug("No audio links found");
 			return null;
