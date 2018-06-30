@@ -1,3 +1,18 @@
 language: java
 jdk:
   - oraclejdk8
+services:
+  - postgresql
+before_script:
+  - psql -c "ALTER USER travis WITH PASSWORD 'travis';"
+  - psql -c 'create database sonosnprone;' -U travis
+addons:
+  postgresql: "10"
+  apt:
+    packages:
+    - postgresql-10
+    - postgresql-client-10
+env:
+  global:
+  - PGPORT=5433
+  - DATABASE_URL="postgres://travis:travis@localhost:5433/sonosnprone"

@@ -1,11 +1,7 @@
 package me.michaeldick.npr.model;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -49,7 +45,7 @@ public class Rating {
     	channel = object.get("channel").getAsString();   
     	if(object.has("cohort") && !object.get("cohort").isJsonNull())
     		cohort = object.get("cohort").getAsString();
-    }
+    	    }
 
 	public void setRating(RatingsList rating) {
 		this.rating = rating;
