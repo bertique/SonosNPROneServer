@@ -391,7 +391,6 @@ public class SonosService implements SonosSoap {
 				}
 			}		
 		}
-		cache.invalidateListeningResponse(auth.getUserId()+id);
 	}
 
 	@Override
@@ -882,6 +881,7 @@ public class SonosService implements SonosSoap {
 						r.setRating(RatingsList.SKIP);
 						cache.putRating(auth.getUserId(), list);
 						logger.debug("Rating set");
+						cache.invalidateListeningResponse(auth.getUserId()+id);
 						break;
 					}
 				}
@@ -942,32 +942,33 @@ public class SonosService implements SonosSoap {
 	        
 		JsonArray searchResultList = element.getAsJsonObject().getAsJsonArray("items");		
         
-		List<String> lastProgramCall = cache.getLastPlayerResponse(auth.getUserId());
+    	String logLine = auth.getUserId().hashCode() + ": Got Metadata from service: " +searchResultList.size();
+		logLine += " (";
+		for (int i = 0; i < searchResultList.size(); i++) {			
+			Media m = new Media(searchResultList.get(i).getAsJsonObject());
+			MediaMetadata mmd = buildMMD(m);
+			if(mmd != null) {
+				logLine += mmd.getId()+ " ";
+			}
+		}
+		logLine+= ")";
+		
+		logger.info(logLine);    	    	
 		
         if (searchResultList == null)
         	return new MediaList(); 
         	        	
-        List<String> newPlayQueue = new ArrayList<String>();
         for (int i = 0; i < searchResultList.size(); i++) { 
         	Media m = new Media(searchResultList.get(i).getAsJsonObject());
 			MediaMetadata mmd = buildMMD(m);
 			if(mmd != null) {							
+				logger.debug("Checking "+mmd.getId());
 				if(mcList.size() < NUMBER_OF_STORIES_PER_CALL) {
-					boolean wasInLastCall = false;
-						if(lastProgramCall != null) {
-						for(String ele : lastProgramCall) {					
-						if(ele.equals(mmd.getId())) {						
-							wasInLastCall = true;
-							break;
-						}
-					}
-				}
-				if(!wasInLastCall)
 					mcList.add(mmd);
-				}
-				newPlayQueue.add(mmd.getId());
-				logger.debug("adding track id: "+mmd.getId());
-				cache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
+					logger.debug("adding track id: "+mmd.getId());
+					cache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
+
+				}					
 			}
 		}	        		
 		
@@ -975,7 +976,6 @@ public class SonosService implements SonosSoap {
 		ml.setIndex(0);
 		ml.setTotal(mcList.size());				
     	logger.debug("Got program list: "+mcList.size());
-    	cache.putLastPlayerResponse(auth.getUserId(), newPlayQueue);
 			
     	return ml;                			
 	}
