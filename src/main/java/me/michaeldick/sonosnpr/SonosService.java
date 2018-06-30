@@ -881,7 +881,6 @@ public class SonosService implements SonosSoap {
 						r.setRating(RatingsList.SKIP);
 						cache.putRating(auth.getUserId(), list);
 						logger.debug("Rating set");
-						cache.invalidateListeningResponse(auth.getUserId()+id);
 						break;
 					}
 				}
@@ -966,9 +965,8 @@ public class SonosService implements SonosSoap {
 				if(mcList.size() < NUMBER_OF_STORIES_PER_CALL) {
 					mcList.add(mmd);
 					logger.debug("adding track id: "+mmd.getId());
-					cache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
-
 				}					
+				cache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
 			}
 		}	        		
 		
