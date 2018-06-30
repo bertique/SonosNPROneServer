@@ -145,7 +145,7 @@ public class SonosService implements SonosSoap {
     private static String DEVICE_LINK_URI;
     private static String DEVICE_TOKEN_URI;
     private static boolean isDebug = false;
-    private static int NUMBER_OF_STORIES_PER_CALL = 4;
+    private static int NUMBER_OF_STORIES_PER_CALL = 3;
 
     private SonosServiceCache cache;
     
@@ -941,6 +941,8 @@ public class SonosService implements SonosSoap {
 	        
 		JsonArray searchResultList = element.getAsJsonObject().getAsJsonArray("items");		
         
+		List<String> lastProgramCall = cache.getLastPlayerResponse(auth.getUserId());
+		
     	String logLine = auth.getUserId().hashCode() + ": Got Metadata from service: " +searchResultList.size();
 		logLine += " (";
 		for (int i = 0; i < searchResultList.size(); i++) {			
@@ -956,25 +958,37 @@ public class SonosService implements SonosSoap {
 		
         if (searchResultList == null)
         	return new MediaList(); 
-        	        	
+        	        	        
+        List<String> newPlayQueue = new ArrayList<String>();
         for (int i = 0; i < searchResultList.size(); i++) { 
         	Media m = new Media(searchResultList.get(i).getAsJsonObject());
 			MediaMetadata mmd = buildMMD(m);
 			if(mmd != null) {							
-				logger.debug("Checking "+mmd.getId());
 				if(mcList.size() < NUMBER_OF_STORIES_PER_CALL) {
+					boolean wasInLastCall = false;
+						if(lastProgramCall != null) {
+						for(String ele : lastProgramCall) {					
+						if(ele.equals(mmd.getId())) {						
+							wasInLastCall = true;
+							break;
+						}
+					}
+				}
+				if(!wasInLastCall)
 					mcList.add(mmd);
-					logger.debug("adding track id: "+mmd.getId());
-				}					
+				}
+				newPlayQueue.add(mmd.getId());
+				logger.debug("adding track id: "+mmd.getId());
 				cache.putListeningResponse(auth.getUserId()+mmd.getId(), m);					
 			}
-		}	        		
+		}	        				         		
 		
         ml.setCount(mcList.size());
 		ml.setIndex(0);
 		ml.setTotal(mcList.size());				
     	logger.debug("Got program list: "+mcList.size());
-			
+       	cache.putLastPlayerResponse(auth.getUserId(), newPlayQueue);
+       	
     	return ml;                			
 	}
 	
