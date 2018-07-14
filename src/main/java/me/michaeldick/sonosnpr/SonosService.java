@@ -2,7 +2,6 @@ package me.michaeldick.sonosnpr;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -120,13 +119,13 @@ public class SonosService implements SonosSoap {
     private static final String PODCAST = "podcasts";
     private static final String AGGREGATION = "aggregation";
     private static final String MUSIC = "music";
-    private static final String SESSIONIDTOKEN = "###";
+    //private static final String SESSIONIDTOKEN = "###";
 
     // Error codes
     private static final String SESSION_INVALID = "Client.SessionIdInvalid";
     private static final String LOGIN_INVALID = "Client.LoginInvalid";
     private static final String SERVICE_UNKNOWN_ERROR = "Client.ServiceUnknownError";
-    private static final String SERVICE_UNAVAILABLE = "Client.ServiceUnavailable";
+    //private static final String SERVICE_UNAVAILABLE = "Client.ServiceUnavailable";
     private static final String ITEM_NOT_FOUND = "Client.ItemNotFound"; 
     private static final String AUTH_TOKEN_EXPIRED = "Client.AuthTokenExpired";
     private static final String NOT_LINKED_RETRY = "Client.NOT_LINKED_RETRY";
@@ -954,10 +953,7 @@ public class SonosService implements SonosSoap {
 		}
 		logLine+= ")";
 		
-		logger.info(logLine);    	    	
-		
-        if (searchResultList == null)
-        	return new MediaList(); 
+		logger.info(logLine);    	    			
         	        	        
         List<String> newPlayQueue = new ArrayList<String>();
         for (int i = 0; i < searchResultList.size(); i++) { 

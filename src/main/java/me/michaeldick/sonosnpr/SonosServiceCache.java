@@ -3,7 +3,6 @@ package me.michaeldick.sonosnpr;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,12 +13,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import com.sonos.services._1.AbstractMedia;
 
 import me.michaeldick.npr.model.Media;
 import me.michaeldick.npr.model.Rating;
@@ -57,7 +51,7 @@ public class SonosServiceCache {
 	
 	public void initializeDb() {
 		
-		Connection c;
+		Connection c = null;
 		try {
 			c = getConnection();
 			PreparedStatement listeningResponseCachePs = c.prepareStatement("CREATE TABLE IF NOT EXISTS ListeningResponseCache("
@@ -80,18 +74,22 @@ public class SonosServiceCache {
 					+ "jsonBlob JSON)");	    				
 			lastResponseToPlayerPs.executeUpdate();
 			lastResponseToPlayerPs.close();
-			c.close();
+
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}    
+		} finally {
+			try {
+				c.close();
+			} catch (SQLException e) {}
+		}
 	}
 	
 	public void resetDb() {
-		Connection c;
+		Connection c = null;
 		try {
 			c = getConnection();
 			
@@ -113,26 +111,30 @@ public class SonosServiceCache {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}    
+		} finally {
+			try {
+				c.close();
+			} catch (SQLException e) {}
+		}
 	}
 		
 	public Media getListeningResponseIfPresent(String id) {		
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 		try {
 			c = getConnection();
 			
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("SELECT jsonBlob FROM ListeningResponseCache WHERE userid = ?");
-			listeningResponseCachePs.setString(1, id);
-			ResultSet rs = listeningResponseCachePs.executeQuery();
+			ps = c.prepareStatement("SELECT jsonBlob FROM ListeningResponseCache WHERE userid = ?");
+			ps.setString(1, id);
+			rs = ps.executeQuery();
 			if(rs.next()) {
 				Gson gson = new Gson();  
 				Media m = gson.fromJson(rs.getString(1), Media.class);  
-		        listeningResponseCachePs.close();
-		        c.close();
+		        ps.close();		        
 				return(m);
 			} else {
-				listeningResponseCachePs.close();
-				c.close();
+				ps.close();				
 				return null;
 			}
 						
@@ -142,17 +144,28 @@ public class SonosServiceCache {
 			return null;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();	
 			return null;
-		} 		
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				rs.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
+		}
 	}
 	
 	public void putListeningResponse(String id, Media m) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
 		try {
 			c = getConnection();
 			
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("INSERT INTO ListeningResponseCache("
+			ps = c.prepareStatement("INSERT INTO ListeningResponseCache("
 					+ "userid, "
 					+ "lastUpdated, "
 					+ "jsonBlob) "
@@ -161,59 +174,66 @@ public class SonosServiceCache {
 					+ "SET lastUpdated = EXCLUDED.lastUpdated, "
 					+ "jsonBlob = EXCLUDED.jsonBlob");
 			
-			listeningResponseCachePs.setString(1, id);	
+			ps.setString(1, id);	
 			Gson gson = new Gson();
-			listeningResponseCachePs.setObject(2, gson.toJson(m));
+			ps.setObject(2, gson.toJson(m));
 			
-			listeningResponseCachePs.executeUpdate();
-			listeningResponseCachePs.close();
-			c.close();
+			ps.executeUpdate();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
-		} 		
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
+		}	
 	}
 	
 	public void invalidateListeningResponse(String id) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
 		try {
 			c = getConnection();
 			
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("DELETE FROM ListeningResponseCache WHERE userid = ?");
-			
-			listeningResponseCachePs.setString(1, id);						
-			
-			listeningResponseCachePs.executeUpdate();
-			listeningResponseCachePs.close();
-			c.close();
+			ps = c.prepareStatement("DELETE FROM ListeningResponseCache WHERE userid = ?");			
+			ps.setString(1, id);									
+			ps.executeUpdate();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
 		} 		
 	}
 	
 	public List<Rating> getRatingIfPresent(String id) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 		try {
 			c = getConnection();
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("SELECT jsonBlob FROM RatingCache WHERE userid = ?");
-			listeningResponseCachePs.setString(1, id);
-			ResultSet rs = listeningResponseCachePs.executeQuery();			
+			ps = c.prepareStatement("SELECT jsonBlob FROM RatingCache WHERE userid = ?");
+			ps.setString(1, id);
+			rs = ps.executeQuery();			
 			if(rs.next()) {
 				Gson gson = new Gson();				
 				List<Rating> lr = gson.fromJson(rs.getString(1), new TypeToken<ArrayList<Rating>>(){}.getType());				
-		        listeningResponseCachePs.close();  
-		        c.close();
 				return(lr);
 			} else {
-				listeningResponseCachePs.close();
-				c.close();
 				return null;
 			}
 						
@@ -225,16 +245,27 @@ public class SonosServiceCache {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
-		} 	
+		}  finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				rs.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
+		}	
 	}
 	
 	public void putRating(String id, List<Rating> r) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
 		try {
 			c = getConnection();
 			logger.error("Setting rating"+id);
 			
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("INSERT INTO RatingCache("
+			ps = c.prepareStatement("INSERT INTO RatingCache("
 					+ "userid, "
 					+ "lastUpdated, "
 					+ "jsonBlob) "
@@ -243,58 +274,67 @@ public class SonosServiceCache {
 					+ "SET lastUpdated = EXCLUDED.lastUpdated, "
 					+ "jsonBlob = EXCLUDED.jsonBlob");
 			
-			listeningResponseCachePs.setString(1, id);			
+			ps.setString(1, id);			
 			Gson gson = new Gson();				
-			listeningResponseCachePs.setObject(2, gson.toJson(r));			
-			listeningResponseCachePs.executeUpdate();
-			listeningResponseCachePs.close();
-			c.close();
+			ps.setObject(2, gson.toJson(r));			
+			ps.executeUpdate();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
 		} 
 	}
 	
 	public void invalidateRatings(String id) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
 		try {
 			c = getConnection();
 			
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("DELETE FROM RatingCache WHERE userid = ?");
+			ps = c.prepareStatement("DELETE FROM RatingCache WHERE userid = ?");
 			
-			listeningResponseCachePs.setString(1, id);						
+			ps.setString(1, id);						
 			
-			listeningResponseCachePs.executeUpdate();
-			listeningResponseCachePs.close();
-			c.close();
+			ps.executeUpdate();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
 		} 		
 	}
 
 	public List<String> getLastPlayerResponse(String id) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 		try {
 			c = getConnection();
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("SELECT jsonBlob FROM ResponseToPlayer WHERE userid = ?");
-			listeningResponseCachePs.setString(1, id);
-			ResultSet rs = listeningResponseCachePs.executeQuery();			
+			ps = c.prepareStatement("SELECT jsonBlob FROM ResponseToPlayer WHERE userid = ?");
+			ps.setString(1, id);
+			rs = ps.executeQuery();			
 			if(rs.next()) {
 				Gson gson = new Gson();				
 				List<String> m = gson.fromJson(rs.getString(1), new TypeToken<ArrayList<String>>(){}.getType());							
-		        listeningResponseCachePs.close();	
-		        c.close();
 				return(m);
 			} else {
-				listeningResponseCachePs.close();
-				c.close();
 				return null;
 			}
 						
@@ -306,15 +346,26 @@ public class SonosServiceCache {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
+		} finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				rs.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
 		} 				
 	}
 	
 	public void putLastPlayerResponse(String id, List<String> m) {
-		Connection c;
+		Connection c = null;
+		PreparedStatement ps = null;
 		try {
 			c = getConnection();
 			
-			PreparedStatement listeningResponseCachePs = c.prepareStatement("INSERT INTO ResponseToPlayer("
+			ps = c.prepareStatement("INSERT INTO ResponseToPlayer("
 					+ "userid, "
 					+ "lastUpdated, "
 					+ "jsonBlob) "
@@ -322,19 +373,24 @@ public class SonosServiceCache {
 					+ "ON CONFLICT (userid) DO UPDATE "
 					+ "SET lastUpdated = EXCLUDED.lastUpdated, "
 					+ "jsonBlob = EXCLUDED.jsonBlob");
-			listeningResponseCachePs.setString(1, id);
+			ps.setString(1, id);
 			Gson gson = new Gson();				
-			listeningResponseCachePs.setObject(2, gson.toJson(m));
+			ps.setObject(2, gson.toJson(m));
 			
-			listeningResponseCachePs.executeUpdate();
-			listeningResponseCachePs.close();
-			c.close();
+			ps.executeUpdate();
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
-		} 
+		}  finally {
+			try {
+				ps.close();
+			} catch (SQLException e) {}
+			try {
+				c.close();
+			} catch (SQLException e) {}
+		}
 			}
 }

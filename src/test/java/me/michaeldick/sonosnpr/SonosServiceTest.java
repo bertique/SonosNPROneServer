@@ -14,7 +14,6 @@ import javax.xml.ws.Holder;
 import javax.xml.ws.soap.SOAPFaultException;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -57,7 +56,7 @@ public class SonosServiceTest {
 	        try {	        	
 	            InputStream in = SonosServiceTest.class.getResourceAsStream("/" + PROPERTIES_FILENAME);
 	            properties.load(in);
-
+	            in.close();
 	        } catch (IOException e) {
 	            System.err.println("There was an error reading " + PROPERTIES_FILENAME + ": " + e.getCause()
 	                    + " : " + e.getMessage());
