@@ -137,10 +137,10 @@ public class SonosService implements SonosSoap {
     public static final String PLAYSTATUS_SKIPPED = "skippedTrack";      
     private static final String RATING_ISINTERESTING = "isliked";
 
-    //private static final String IDENTITY_API_URI_DEFAULT = "https://api.npr.org/identity/v2/user";
-    private static final String LISTENING_API_URI_DEFAULT = "https://api.npr.org/listening/v2";
-    private static final String DEVICE_LINK_URI_DEFAULT = "https://api.npr.org/authorization/v2/device";
-    private static final String DEVICE_TOKEN_URI_DEFAULT = "https://api.npr.org/authorization/v2/token";
+    //private static final String IDENTITY_API_URI_DEFAULT = "https://identity.api.npr.org/v2/user";
+    private static final String LISTENING_API_URI_DEFAULT = "https://listening.api.npr.org/v2";
+    private static final String DEVICE_LINK_URI_DEFAULT = "https://authorization.api.npr.org/v2/device";
+    private static final String DEVICE_TOKEN_URI_DEFAULT = "https://authorization.api.npr.org/v2/token";
     
     //private static String IDENTITY_API_URI;
     private static String LISTENING_API_URI;
