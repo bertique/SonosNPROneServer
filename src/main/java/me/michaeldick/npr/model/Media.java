@@ -53,7 +53,7 @@ public class Media {
     	JsonObject links = data.getAsJsonObject("links");
     	if(links.has("web")) {
     		for(JsonElement el : links.get("web").getAsJsonArray()) {    	
-    			if(el.getAsJsonObject().get("content-type").getAsString().equals("text/html")) {
+    			if(el.getAsJsonObject().get("content-type").getAsString().equals("text/html") && el.getAsJsonObject().has("href")) {
         			webLink = el.getAsJsonObject().get("href").getAsString();
         			break;    				
     			}
@@ -61,19 +61,19 @@ public class Media {
     	}  
     	if(links.has("image")) {  
     		for(JsonElement el : links.get("image").getAsJsonArray()) { 
-    			if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href") && el.getAsJsonObject().get("rel").getAsString().equals("square"))
+    			if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href") && el.getAsJsonObject().get("rel").getAsString().equals("square") && el.getAsJsonObject().has("href"))
     				imageLinkSquare = el.getAsJsonObject().get("href").getAsString();
-    			else if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href") && el.getAsJsonObject().get("rel").getAsString().equals("logo_square"))
+    			else if(el.getAsJsonObject().has("rel") && el.getAsJsonObject().has("href") && el.getAsJsonObject().get("rel").getAsString().equals("logo_square") && el.getAsJsonObject().has("href"))
     				imageLinkLogoSquare = el.getAsJsonObject().get("href").getAsString();
     		}    		    	
     	} 
     	if(links.has("audio")) { 
     		for(JsonElement el : links.get("audio").getAsJsonArray()) {
-    			if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/mp3") && !el.getAsJsonObject().get("href").getAsString().endsWith(".mp4")) {			
+    			if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/mp3") && !el.getAsJsonObject().get("href").getAsString().endsWith(".mp4") && el.getAsJsonObject().has("href")) {			
     				audioLink = el.getAsJsonObject().get("href").getAsString();
     				break;
     			}		
-    			else if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/aac") && el.getAsJsonObject().get("href").getAsString().endsWith(".mp3")) {    					
+    			else if(el.getAsJsonObject().get("content-type").getAsString().equals("audio/aac") && el.getAsJsonObject().get("href").getAsString().endsWith(".mp3") && el.getAsJsonObject().has("href")) {    					
     				audioLink = el.getAsJsonObject().get("href").getAsString();
     				break;
     				
