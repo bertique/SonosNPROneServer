@@ -853,6 +853,7 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public ContentKey getContentKey(String id, String uri, String deviceSessionToken) throws CustomFault {
+		logger.debug("getContentKey");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -925,12 +926,21 @@ public class SonosService implements SonosSoap {
 	@Override
 	public AppLinkResult getAppLink(String householdId, String hardware, String osVersion, String sonosAppName,
 			String callbackPath) throws CustomFault {
+		logger.debug("getAppLink");
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public UserInfo getUserInfo() throws CustomFault {
+		logger.debug("getUserInfo");
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public DeviceAuthTokenResult refreshAuthToken() throws CustomFault {
+		logger.debug("refreshAuthToken");
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -1295,12 +1305,6 @@ public class SonosService implements SonosSoap {
 		} else {
 			logger.error("no headers found");
 		}
-		return null;
-	}
-
-	@Override
-	public DeviceAuthTokenResult refreshAuthToken() throws CustomFault {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }
