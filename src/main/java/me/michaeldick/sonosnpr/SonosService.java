@@ -583,7 +583,10 @@ public class SonosService implements SonosSoap {
 		Media m = ListeningResponseCache.getIfPresent(auth.getUserId()+id);
 		if(m != null) {
 			if(m.getAudioLink() != null) {			
-				getMediaURIResult.value = m.getAudioLink();				
+				//getMediaURIResult.value = m.getAudioLink();
+				// Temporary workaround for connection issues
+				getMediaURIResult.value = m.getAudioLink().replace("https://ondemand.npr.org/anon.npr-mp3/","https://sonosnprproxy.azurewebsites.net/");
+				logger.debug("Media URI found: "+getMediaURIResult.value);
 			} else {
 				logger.debug("Item not found");				
 				throwSoapFault(ITEM_NOT_FOUND);
