@@ -402,9 +402,22 @@ public class SonosService implements SonosSoap {
 
 	@Override
 	public LastUpdate getLastUpdate() throws CustomFault {
-		logger.debug("getLastUpdate");
-	
+		logger.debug("getLastUpdate");	
+		
 		NprAuth auth = getNprAuth();	
+		
+		JSONObject sentEvent = messageBuilder.event(auth.getUserId(), "getLastUpdate", null);
+        
+        ClientDelivery delivery = new ClientDelivery();
+        delivery.addMessage(sentEvent);
+        
+        MixpanelAPI mixpanel = new MixpanelAPI();
+        try {
+			mixpanel.deliver(delivery);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			logger.debug("Mixpanel error: getLastUpdate");
+		}
 		
 		LastUpdate response = new LastUpdate();
 		
@@ -562,13 +575,6 @@ public class SonosService implements SonosSoap {
 		return null;
 	}
 
-	@Override
-	public SegmentMetadataList getStreamingMetadata(String id,
-			XMLGregorianCalendar startTime, int duration) throws CustomFault {
-		logger.debug("getStreamingMetadata");
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public void getMediaURI(String id, MediaUriAction action, Integer secondsSinceExplicit,
