@@ -197,6 +197,17 @@
 
             <xs:element name="itemType" type="tns:itemType"/>
 
+            <xs:simpleType name="semanticType">
+                <xs:restriction base="xs:string">
+                    <xs:enumeration value="show"/>
+                    <xs:enumeration value="episode.show"/>
+                    <xs:enumeration value="podcast"/>
+                    <xs:enumeration value="episode.podcast"/>
+                </xs:restriction>
+            </xs:simpleType>
+
+            <xs:element name="semanticType" type="tns:semanticType"/>
+
             <xs:simpleType name="deviceSessionToken">
                 <xs:annotation>
                     <xs:documentation>It is a token that is specific to a device to allow that device to stream.
@@ -244,6 +255,7 @@
                 <xs:sequence>
                     <xs:element ref="tns:id"/>
                     <xs:element ref="tns:itemType"/>
+                    <xs:element ref="tns:semanticType" minOccurs="0"/>
                     <xs:element name="displayType" type="xs:string" minOccurs="0"/>
                     <xs:element name="title" type="xs:string"/>
 
@@ -263,17 +275,15 @@
                     <!-- This combined with user settings determine content playability -->
                     <xs:element name="isExplicit" type="xs:boolean" minOccurs="0"/>
 
-                    <!--
-                       Included for backwards compatibility with MOAPI 1.0. These are
-                       currently all disregarded by the Sonos firmware. -->
-                    <xs:element name="language" type="xs:string" minOccurs="0"/>
-                    <xs:element name="country" type="xs:string" minOccurs="0"/>
-                    <xs:element name="genreId" type="xs:string" minOccurs="0"/>
-                    <xs:element name="genre" type="xs:string" minOccurs="0"/>
-                    <xs:element name="twitterId" type="xs:string" minOccurs="0"/>
-                    <xs:element name="liveNow" type="xs:boolean" minOccurs="0"/>
-                    <xs:element name="onDemand" type="xs:boolean" minOccurs="0"/>
+                    <!-- is this short lived, if so do not allow adding to Sonos Favorites or alarms-->
+                    <xs:element name="isEphemeral" type="xs:boolean" minOccurs="0"/>
 
+                    <!-- Enables controllers to know how much of the item has been listened to, and 
+                    if the item has been completed -->
+                    <xs:element name="positionInformation" type="tns:positionInformation" minOccurs="0" maxOccurs="1"/>
+
+                    <!-- When the item was released -->
+                    <xs:element name="releaseDate" type="xs:dateTime" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
 
@@ -376,6 +386,8 @@
                     <xs:element name="index"        type="xs:int"/>
                     <!-- Required. The offset at which playback should be resumed. -->
                     <xs:element name="offsetMillis" type="xs:int"/>
+                    <!-- Optional. Marks whether or not the item has been "completed", i.e. podcasts -->
+                    <xs:element name="isCompleted"  type="xs:boolean" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
 
@@ -383,61 +395,64 @@
                 <xs:complexContent>
                     <xs:extension base="tns:AbstractMedia">
                         <xs:sequence>
-                            <!--The collection can implement one of these two sets of metadata
-                            the first is intended for music collections, the second for audio books-->
+                            <!--The collection can implement one of these three sets of metadata
+                                the first is intended for music collections, the second for audio books,
+                                the third for podcasts-->
                             <xs:choice>
                                 <xs:sequence>
-                            <!--
-                               Collections can optionally indicate a creator. For example, a
-                               collection could represent an album and "artist" would indicate
-                               the album artist. -->
-                            <xs:element name="artist" type="xs:string" minOccurs="0"/>
-                            <xs:element name="artistId" type="tns:id" minOccurs="0"/>
+                                    <!--
+                                        Collections can optionally indicate a creator. For example, a
+                                        collection could represent an album and "artist" would indicate
+                                        the album artist. -->
+                                    <xs:element name="artist" type="xs:string" minOccurs="0"/>
+                                    <xs:element name="artistId" type="tns:id" minOccurs="0"/>
                                 </xs:sequence>
                                 <xs:sequence>
                                     <xs:element name="authorId" type="xs:string" minOccurs="0" />
                                     <xs:element name="author" type="xs:string" minOccurs="0" />
                                     <xs:element name="narratorId" type="xs:string" minOccurs="0" />
                                     <xs:element name="narrator" type="xs:string" minOccurs="0" />
+                                </xs:sequence>                              
+                                <xs:sequence>
+                                    <xs:element name="producerId" type="xs:string" minOccurs="0" />
+                                    <xs:element name="producer" type="xs:string" minOccurs="0" />
+                                    <!-- Need to have podcast/podcastId here so that containers (that aren't podcasts) can refer back to their podcast -->
+                                    <xs:element name="podcastId" type="xs:string" minOccurs="0" />
+                                    <xs:element name="podcast" type="xs:string" minOccurs="0" />
                                 </xs:sequence>
                             </xs:choice>
 
                             <!--
-                               Indicates that the collection supports the getScrollIndices
-                               method if omitted, canScroll is assumed to be false. -->
+                                        Indicates that the collection supports the getScrollIndices
+                                        method if omitted, canScroll is assumed to be false. -->
                             <xs:element name="canScroll" type="xs:boolean" minOccurs="0"/>
 
                             <!--
-                               Indicates that the collection can be "played" by enumerating
-                               using the "recursive" flag to obtain a flat list of all
-                               mediaMetadata items it contains. If omitted, canPlay is assumed
-                               to be false -->
+                                        Indicates that the collection can be "played" by enumerating
+                                        using the "recursive" flag to obtain a flat list of all
+                                        mediaMetadata items it contains. If omitted, canPlay is assumed
+                                        to be false -->
                             <xs:element name="canPlay" type="xs:boolean" minOccurs="0"/>
 
                             <!--
-                               Indicates that the collection can be enumerated, using the
-                               collection id in a subsequent call to getMetadata. If omitted,
-                               canEnumerate is assumed to be true -->
+                                        Indicates that the collection can be enumerated, using the
+                                        collection id in a subsequent call to getMetadata. If omitted,
+                                        canEnumerate is assumed to be true -->
                             <xs:element name="canEnumerate" type="xs:boolean" minOccurs="0"/>
 
                             <!--
-                               Indicates that the collection can be added to user favorites.
-                               If omitted, canAddToFavorites is assumed to be true. -->
+                                        Indicates that the collection can be added to user favorites.
+                                        If omitted, canAddToFavorites is assumed to be true. -->
                             <xs:element name="canAddToFavorites" type="xs:boolean" minOccurs="0"/>
 
                             <!--
-                               Indicates that the collection contains user favorites.
-                               If omitted, containsFavorite is assumed to be false. -->
+                                        Indicates that the collection contains user favorites.
+                                        If omitted, containsFavorite is assumed to be false. -->
                             <xs:element name="containsFavorite" type="xs:boolean" minOccurs="0"/>
 
                             <!--
-                               Included for backwards compatibility with MOAPI 1.0. This is
-                               currently disregarded by the Sonos firmware. -->
-                            <xs:element name="canCache" type="xs:boolean" minOccurs="0"/>
-
-                            <!--
-                               Indicates that playback of this whole collection allows skip
-                               forward. Defaults to true. -->
+                                        Indicates that playback of this whole collection allows skip
+                                        forward. Defaults to true. -->
                             <xs:element name="canSkip" type="xs:boolean" minOccurs="0"/>
 
                             <!-- This is really any artwork in the square album style. -->
@@ -446,19 +461,15 @@
                             <!-- Does this collection support resume from last playhead position reported? -->
                             <xs:element name="canResume" type="xs:boolean" minOccurs="0"/>
 
-                            <!--
-                               Included for backwards compatibility with MOAPI 1.0. These
-                               are currently all disregarded by the Sonos firmware. -->
-                            <xs:element name="authRequired" type="xs:boolean" minOccurs="0"/>
-                            <xs:element name="homogeneous" type="xs:boolean" minOccurs="0"/>
-                            <xs:element name="canAddToFavorite" type="xs:boolean" minOccurs="0"/>
+                            <!-- Indicates the number of total elements in the collection -->
+                            <xs:element name="total" type="xs:int" minOccurs="0"/>
                         </xs:sequence>
 
                         <!-- For editable containers you must always return readOnly false. You can further configure
-                             editable features with the use of canReorderItems and canDeleteItems -->
+                                        editable features with the use of canReorderItems and canDeleteItems -->
                         <xs:attribute name="readOnly" type="xs:boolean" use="optional" default="true"/>
                         <!-- You can control if the items in the collection can be deleted and/or reordered with the
-                             following attributes -->
+                                        following attributes -->
                         <xs:attribute name="canReorderItems" type="xs:boolean" use="optional" default="false"/>
                         <xs:attribute name="canDeleteItems"  type="xs:boolean" use="optional" default="false"/>
 
@@ -489,6 +500,14 @@
                             <xs:element name="bookId" type="xs:string" minOccurs="0" />
                             <xs:element name="book" type="xs:string" minOccurs="0" />
                         </xs:sequence>
+                        <xs:sequence>
+                            <xs:element name="producerId" type="xs:string" minOccurs="0" />
+                            <xs:element name="producer" type="xs:string" minOccurs="0" />
+                            <xs:element name="podcastId" type="xs:string" minOccurs="0" />
+                            <xs:element name="podcast" type="xs:string" minOccurs="0" />
+                            <xs:element name="hostId" type="xs:string" minOccurs="0" />
+                            <xs:element name="host" type="xs:string" minOccurs="0" />
+                        </xs:sequence>
                     </xs:choice>
                     <xs:element name="genreId" type="tns:id" minOccurs="0"/>
                     <xs:element name="genre" type="xs:string" minOccurs="0"/>
@@ -515,7 +534,6 @@
                     <xs:element name="canResume" type="xs:boolean" minOccurs="0"/>
 
                     <xs:element name="canSeek" type="xs:boolean" minOccurs="0"/>
-                    <xs:element name="hasOutOfBandMetadata" type="xs:boolean" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
 
@@ -530,19 +548,9 @@
                     <xs:element name="logo" type="tns:albumArtUrl" minOccurs="0"/>
                     <xs:element name="description" type="xs:string" minOccurs="0"/>
 
+                    <!-- Deprecated as of 9.3 -->
                     <!-- is this short lived, if so do not allow adding to Sonos Favorites or alarms-->
                     <xs:element name="isEphemeral" type="xs:boolean" minOccurs="0"/>
-
-                    <!--
-                       Included for backwards compatibility with MOAPI 1.0.  These are
-                       currently all disregarded by the Sonos firmware. -->
-                    <xs:element name="reliability" type="xs:anyURI" minOccurs="0"/>
-                    <xs:element name="title" type="xs:anyURI" minOccurs="0"/>
-                    <xs:element name="subtitle" type="xs:anyURI" minOccurs="0"/>
-                    <xs:element name="nextShowSeconds" type="xs:anyURI" minOccurs="0"/>
-
-                    <!-- Deprecated as of 6.3. To embed metadata use HLS specification. -->
-                    <xs:element name="hasOutOfBandMetadata" type="xs:boolean" minOccurs="0"/>
                 </xs:sequence>
             </xs:complexType>
 
@@ -588,48 +596,6 @@
                 </xs:complexContent>
             </xs:complexType>
 
-            <!-- Deprecated as of 6.3. To embed metadata use HLS specification. -->
-            <xs:complexType name="segmentMetadata">
-                <xs:annotation>
-                    <xs:documentation>segmentMetadata is metadata that applies to a specified time range.
-                    </xs:documentation>
-                </xs:annotation>
-                <xs:sequence>
-                    <xs:element ref="tns:id"/>
-                    <xs:element name="trackId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="track" type="xs:string" minOccurs="0"/>
-                    <xs:element name="artistId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="artist" type="xs:string" minOccurs="0"/>
-                    <xs:element name="composerId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="composer" type="xs:string" minOccurs="0"/>
-                    <xs:element name="albumId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="album" type="xs:string" minOccurs="0"/>
-                    <xs:element name="albumArtistId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="albumArtist" type="xs:string" minOccurs="0"/>
-                    <xs:element name="genreId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="genre" type="xs:string" minOccurs="0"/>
-                    <xs:element name="showId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="show" type="xs:string" minOccurs="0"/>
-                    <xs:element name="episodeId" type="tns:id" minOccurs="0"/>
-                    <xs:element name="episode" type="xs:string" minOccurs="0"/>
-                    <xs:element name="host" type="xs:string" minOccurs="0"/>
-                    <xs:element name="topic" type="xs:string" minOccurs="0"/>
-                    <xs:element name="rating" type="xs:int" minOccurs="0"/>
-                    <xs:element name="albumArtURI" type="xs:anyURI" minOccurs="0"/>
-                    <xs:element name="startTime" type="xs:dateTime">
-                        <xs:annotation>
-                            <xs:documentation>Specifies the inclusive start time of the period to which this metadata
-                                applies.
-                            </xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                    <xs:element name="duration" type="xs:int">
-                        <xs:annotation>
-                            <xs:documentation>Specifies the length of the period in milliseconds.</xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                </xs:sequence>
-            </xs:complexType>
             <xs:complexType name="mediaList">
                 <xs:sequence>
                     <xs:element name="index" type="xs:int"/>
@@ -650,32 +616,6 @@
                     <xs:choice minOccurs="0" maxOccurs="unbounded">
                         <xs:element name="mediaMetadata" type="tns:mediaMetadata"/>
                     </xs:choice>
-                </xs:sequence>
-            </xs:complexType>
-
-            <!-- Deprecated as of 6.3. To embed metadata use HLS specification. -->
-            <xs:complexType name="segmentMetadataList">
-                <xs:sequence minOccurs="0">
-                    <xs:element name="startTime" type="xs:dateTime" minOccurs="0">
-                        <xs:annotation>
-                            <xs:documentation>Specifies the inclusive start time of the period for this list. If
-                                omitted, defaults the startTime of the first temporalMediaMetadata element.
-                            </xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                    <xs:element name="duration" type="xs:int" minOccurs="0">
-                        <xs:annotation>
-                            <xs:documentation>Specifies the length of the period of this list in milliseconds. If
-                                omitted, defaults the duration between startTime and the last elment's end time.
-                            </xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
-                    <xs:element name="segmentMetadata" type="tns:segmentMetadata" minOccurs="0" maxOccurs="unbounded">
-                        <xs:annotation>
-                            <xs:documentation>A chronologically ordered list of segmentMetadata elements
-                            </xs:documentation>
-                        </xs:annotation>
-                    </xs:element>
                 </xs:sequence>
             </xs:complexType>
 
@@ -709,6 +649,7 @@
                 <xs:sequence>
                     <xs:element ref="tns:id"/>
                     <xs:element ref="tns:itemType"/>
+                    <xs:element ref="tns:semanticType" minOccurs="0"/>
                     <xs:element name="title" type="xs:string"/>
                     <xs:element name="canPlay" type="xs:boolean" minOccurs="0"/>
                 </xs:sequence>
@@ -723,8 +664,8 @@
             <xs:complexType name="extendedMetadata">
                 <xs:sequence>
                     <xs:choice>
-                        <xs:element name="mediaCollection" type="tns:mediaCollection" minOccurs="0" maxOccurs="1"/>
-                        <xs:element name="mediaMetadata" type="tns:mediaMetadata" minOccurs="0" maxOccurs="1"/>
+                        <xs:element name="mediaCollection" type="tns:mediaCollection" maxOccurs="1"/>
+                        <xs:element name="mediaMetadata" type="tns:mediaMetadata" maxOccurs="1"/>
                     </xs:choice>
                     <xs:element name="relatedBrowse" type="tns:relatedBrowse" minOccurs="0" maxOccurs="unbounded"/>
                     <xs:element name="relatedText" type="tns:relatedText" minOccurs="0" maxOccurs="unbounded"/>
@@ -1159,24 +1100,6 @@
                 </xs:complexType>
             </xs:element>
 
-            <!-- Deprecated as of 6.3. To embed metadata use HLS specification. -->
-            <xs:element name="getStreamingMetadata">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="id" type="tns:id"/>
-                        <xs:element name="startTime" type="xs:dateTime"/>
-                        <xs:element name="duration" type="xs:int"/>
-                    </xs:sequence>
-                </xs:complexType>
-            </xs:element>
-            <xs:element name="getStreamingMetadataResponse">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="getStreamingMetadataResult" type="tns:segmentMetadataList"/>
-                    </xs:sequence>
-                </xs:complexType>
-            </xs:element>
-
             <xs:element name="getContentKey">
                 <xs:complexType>
                     <xs:sequence>
@@ -1517,14 +1440,6 @@
         <wsdl:part name="parameters" element="tns:getDeviceAuthTokenResponse"/>
     </wsdl:message>
 
-    <wsdl:message name="getStreamingMetadataIn">
-        <wsdl:part name="parameters" element="tns:getStreamingMetadata"/>
-    </wsdl:message>
-
-    <wsdl:message name="getStreamingMetadataOut">
-        <wsdl:part name="parameters" element="tns:getStreamingMetadataResponse"/>
-    </wsdl:message>
-
     <wsdl:message name="getContentKeyIn">
         <wsdl:part name="parameters" element="tns:getContentKey"/>
     </wsdl:message>
@@ -1693,12 +1608,6 @@
         <wsdl:operation name="refreshAuthToken">
             <wsdl:input message="tns:refreshAuthTokenIn"/>
             <wsdl:output message="tns:refreshAuthTokenOut"/>
-            <wsdl:fault message="tns:customFault" name="customFault"/>
-        </wsdl:operation>
-        <!-- Deprecated as of 6.3. To embed metadata use HLS specification. -->
-        <wsdl:operation name="getStreamingMetadata">
-            <wsdl:input message="tns:getStreamingMetadataIn"/>
-            <wsdl:output message="tns:getStreamingMetadataOut"/>
             <wsdl:fault message="tns:customFault" name="customFault"/>
         </wsdl:operation>
         <wsdl:operation name="getContentKey">
@@ -2048,20 +1957,6 @@
                 <soap:fault name="customFault" use="literal"/>
             </wsdl:fault>
         </wsdl:operation>
-        <wsdl:operation name="getStreamingMetadata">
-            <soap:operation soapAction="http://www.sonos.com/Services/1.1#getStreamingMetadata" style="document"/>
-            <wsdl:input>
-                <soap:header use="literal" message="tns:smapiHeader" part="credentials"/>
-                <soap:header use="literal" message="tns:smapiHeader" part="context"/>
-                <soap:body use="literal"/>
-            </wsdl:input>
-            <wsdl:output>
-                <soap:body use="literal"/>
-            </wsdl:output>
-            <wsdl:fault name="customFault">
-                <soap:fault name="customFault" use="literal"/>
-            </wsdl:fault>
-        </wsdl:operation>
         <wsdl:operation name="getContentKey">
             <soap:operation soapAction="http://www.sonos.com/Services/1.1#getContentKey" style="document"/>
             <wsdl:input>
@@ -2164,7 +2059,7 @@
 
     <wsdl:service name="Sonos">
         <wsdl:port name="SonosSoap" binding="tns:SonosSoap">
-            <soap:address location="http://moapi.sonos.com/Test/TestService.php"/>
+		<soap:address location="http://moapi.sonos.com/Test/TestService.php"/>
         </wsdl:port>
     </wsdl:service>
 
