@@ -37,6 +37,7 @@ import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.jaxws.context.WrappedMessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.log4j.Logger;
+import org.eclipse.jetty.server.session.HouseKeeper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
@@ -404,18 +405,7 @@ public class SonosService implements SonosSoap {
 		
 		NprAuth auth = getNprAuth();	
 		
-		JSONObject sentEvent = messageBuilder.event(auth.getUserId(), "getLastUpdate", null);
-        
-        ClientDelivery delivery = new ClientDelivery();
-        delivery.addMessage(sentEvent);
-        
-        MixpanelAPI mixpanel = new MixpanelAPI();
-        try {
-			mixpanel.deliver(delivery);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			logger.debug("Mixpanel error: getLastUpdate");
-		}
+		sendMetricsEvent(auth.getUserId(), "getLastUpdate", null);
 		
 		LastUpdate response = new LastUpdate();
 		
@@ -434,18 +424,8 @@ public class SonosService implements SonosSoap {
 			throws CustomFault {	
 		logger.debug("getDeviceLinkCode");
 		
-        JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceLinkCode", null);
-    
-        ClientDelivery delivery = new ClientDelivery();
-        delivery.addMessage(sentEvent);
-        
-        MixpanelAPI mixpanel = new MixpanelAPI();
-        try {
-			mixpanel.deliver(delivery);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			logger.debug("Mixpanel error: getDeviceLinkCode");
-		}
+		
+        sendMetricsEvent(householdId, "getDeviceLinkCode", null);        
         
 		Form form = new Form();
 		form.param("client_id", NPR_CLIENT_ID);				
@@ -538,18 +518,7 @@ public class SonosService implements SonosSoap {
             logger.info(householdId.hashCode() +": Got token");
         }
 		    
-        JSONObject sentEvent = messageBuilder.event(householdId, "getDeviceAuthToken", null);
-        
-        ClientDelivery delivery = new ClientDelivery();
-        delivery.addMessage(sentEvent);
-        
-        MixpanelAPI mixpanel = new MixpanelAPI();
-        try {
-			mixpanel.deliver(delivery);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			logger.debug("Mixpanel error: getDeviceLinkCode");
-		}
+        sendMetricsEvent(householdId, "getDeviceAuthToken", null);        
         
         DeviceAuthTokenResult response = new DeviceAuthTokenResult();
 		response.setAuthToken(access_token);	
@@ -634,23 +603,16 @@ public class SonosService implements SonosSoap {
 			|| parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.HISTORY)
 			|| parameters.getId().equals(SonosService.PROGRAM+":"+SonosService.MUSIC)
 			|| parameters.getId().equals(ItemType.SEARCH.value())) {
-			
-			try {
-		        JSONObject props = new JSONObject();
-		        props.put("Program", parameters.getId());        
-		        
-		        JSONObject sentEvent = messageBuilder.event(auth.getUserId(), "getMetadata", props);
-		        
-		        ClientDelivery delivery = new ClientDelivery();
-		        delivery.addMessage(sentEvent);
-		        
-		        MixpanelAPI mixpanel = new MixpanelAPI();
-	        
-				mixpanel.deliver(delivery);
-			} catch (IOException | JSONException e1) {
+					
+	        JSONObject props = new JSONObject();
+	        try {
+				props.put("Program", parameters.getId());
+			} catch (JSONException e) {
 				// TODO Auto-generated catch block
-				logger.debug("Mixpanel error: getMetadata");
-			}
+				e.printStackTrace();
+			}        
+	        
+	        sendMetricsEvent(auth.getUserId(), "getMetadata", props);
 		}        
 		
         GetMetadataResponse response = new GetMetadataResponse();
@@ -1252,6 +1214,20 @@ public class SonosService implements SonosSoap {
             throw new SOAPFaultException(soapFault);
 
     }
+	
+	private void sendMetricsEvent(String userId, String eventName, JSONObject properties) {
+		JSONObject sentEvent = messageBuilder.event(userId, eventName, properties);
+	    
+        ClientDelivery delivery = new ClientDelivery();
+        delivery.addMessage(sentEvent);
+        
+        MixpanelAPI mixpanel = new MixpanelAPI();
+        try {
+			mixpanel.deliver(delivery);
+		} catch (IOException e1) {
+			logger.debug("Mixpanel error: "+eventName);
+		}
+	}
 	
 	private NprAuth getNprAuth() {
 		Credentials creds = getCredentialsFromHeaders();
