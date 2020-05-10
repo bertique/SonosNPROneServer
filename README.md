@@ -6,7 +6,7 @@ Most people probably just want to use the [hosted version](https://michaeldick.m
 Issues and pull-requests welcome.
 
 # How do I add NPR One to my Sonos?
-Check out the instructions at [http://michaeldick.me/sonos-nprone/](http://michaeldick.me/sonos-nprone/)
+Check out the instructions at [https://michaeldick.me/sonos-nprone/](http://michaeldick.me/sonos-nprone/)
 
 # How do I run the service myself?
 
