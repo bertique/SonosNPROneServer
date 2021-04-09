@@ -10,6 +10,7 @@
 	<url>http://michaeldick.me</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<cxfVersion>3.4.3</cxfVersion>
 	</properties>
 	<repositories>
 		<repository>
@@ -24,22 +25,22 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webmvc</artifactId>
-			<version>4.3.13.RELEASE</version>
+			<version>5.3.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
 			<artifactId>cxf-rt-frontend-jaxws</artifactId>
-			<version>3.2.1</version>
+			<version>${cxfVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
 			<artifactId>cxf-rt-transports-http</artifactId>
-			<version>3.2.1</version>
+			<version>${cxfVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
 			<artifactId>cxf-rt-transports-http-jetty</artifactId>
-			<version>3.2.1</version>
+			<version>${cxfVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -47,14 +48,9 @@
 			<version>4.13.1</version>
 		</dependency>
 		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>1.11</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.cxf</groupId>
 			<artifactId>cxf-rt-rs-client</artifactId>
-			<version>3.2.1</version>
+			<version>${cxfVersion}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -64,12 +60,12 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>26.0-jre</version>
+			<version>30.1.1-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.7.25</version>
+			<version>1.7.30</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -85,73 +81,24 @@
 	</dependencies>
 	<build>
 		<finalName>${project.artifactId}</finalName>
-		<plugins>		        
-		<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>keytool-maven-plugin</artifactId>
-				<version>1.5</version>
-				<executions>
-					<execution>
-						<phase>generate-resources</phase>
-						<id>clean</id>
-						<goals>
-							<goal>clean</goal>
-						</goals>
-					</execution>
-					<execution>
-						<phase>generate-resources</phase>
-						<id>genkey</id>
-						<goals>
-							<goal>generateKeyPair</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<keystore>${project.build.directory}/tomcat-ssl.keystore</keystore>
-					<dname>cn=localhost</dname>
-					<keypass>tomcat-learn</keypass>
-					<storepass>tomcat-learn</storepass>
-					<alias>tomcat-learn</alias>
-					<keyalg>RSA</keyalg>
-				</configuration>
-			</plugin>
+		<plugins>	
 			<plugin>
-				<groupId>org.apache.tomcat.maven</groupId>
-				<artifactId>tomcat7-maven-plugin</artifactId>
-				<version>2.1</version>
-				<executions>
-					<execution>
-						<id>start-tomcat</id>
-						<goals>
-							<goal>run-war</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>tomcat-run</id>
-						<goals>
-							<goal>exec-war-only</goal>
-						</goals>
-						<phase>package</phase>
-						<configuration>
-							<path>/</path>
-							<finalName>${project.artifactId}-war-exec.jar</finalName>
-						</configuration>
-					</execution>
-				</executions>
-				<configuration>
-					<path>/</path>
-					<fork>false</fork>
-					<useSeparateTomcatClassLoader>true</useSeparateTomcatClassLoader>
-					<port>8080</port>
-					<httpsPort>8443</httpsPort>
-					<keystoreFile>${project.build.directory}/tomcat-ssl.keystore</keystoreFile>
-					<keystorePass>tomcat-learn</keystorePass>
-				</configuration>
-			</plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+		        <artifactId>exec-maven-plugin</artifactId>
+		        <version>3.0.0</version>
+		        <configuration>
+		        	<executable>java</executable>		            		       
+			        <arguments>
+			            <argument>-jar</argument>
+			            <argument>target/dependency/webapp-runner.jar</argument>
+			            <argument>target/*.war</argument>
+			        </arguments>
+			    </configuration>
+		    </plugin>	        
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.0.2</version>
+				<version>3.1.2</version>
 				<executions>
 					<execution>
 						<id>copy-dependencies</id>
@@ -159,13 +106,27 @@
 						<goals>
 							<goal>copy-dependencies</goal>
 						</goals>
-					</execution>					
+					</execution>
+					<execution>
+	                    <phase>package</phase>
+	                    <goals><goal>copy</goal></goals>
+	                    <configuration>
+	                        <artifactItems>
+	                            <artifactItem>
+	                                <groupId>com.heroku</groupId>
+	                                <artifactId>webapp-runner</artifactId>
+	                                <version>9.0.41.0</version>
+	                                <destFileName>webapp-runner.jar</destFileName>
+	                            </artifactItem>
+	                        </artifactItems>
+	                    </configuration>
+	                </execution>
 				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.cxf</groupId>
 				<artifactId>cxf-codegen-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>${cxfVersion}</version>
 				<executions>
 					<execution>
 						<id>generate-sources</id>
@@ -191,48 +152,17 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
+				<version>3.8.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.2.3</version>				
+			</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											org.codehaus.mojo
-										</groupId>
-										<artifactId>
-											keytool-maven-plugin
-										</artifactId>
-										<versionRange>
-											[1.5,)
-										</versionRange>
-										<goals>
-											<goal>clean</goal>
-											<goal>generateKeyPair</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore></ignore>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 </project>
