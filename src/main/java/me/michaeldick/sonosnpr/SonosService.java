@@ -595,7 +595,8 @@ public class SonosService implements SonosSoap {
 	public GetMetadataResponse getMetadata(GetMetadata parameters)
 			throws CustomFault {
 		logger.debug("getMetadata id:"+parameters.getId()+" count:"+parameters.getCount()+" index:"+parameters.getIndex());
-
+		logger.debug(String.format("Cache stats: ListeningResponseCache %d RatingCache %d PlayerCache %d",ListeningResponseCache.size(), RatingCache.size(), LastResponseToPlayer.size())) ;
+		
 		NprAuth auth = getNprAuth();		
         
         // Mixpanel event
