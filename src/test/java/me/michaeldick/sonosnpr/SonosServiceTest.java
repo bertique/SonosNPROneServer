@@ -120,10 +120,9 @@ public class SonosServiceTest {
 		
 		ReportPlaySecondsResult response = service.reportPlaySeconds("999900001:2015-05-31T21:00:00-0400|short", 0, null, null, null);
 		assertEquals(0, response.getInterval());
-	
-		JsonParser parser = new JsonParser();        
-		JsonElement requestElement = parser.parse(server.getRequestBody());
-		JsonElement expectedElement = parser.parse("[{\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[],\"elapsed\":0,\"mediaId\":\"999900001:2015-05-31T21:00:00-0400|short\",\"duration\":179,\"origin\":\"HRNC\",\"rating\":\"START\",\"channel\":\"npr\",\"cohort\":\"Z\"}]");
+	    
+		JsonElement requestElement = JsonParser.parseString(server.getRequestBody());
+		JsonElement expectedElement = JsonParser.parseString("[{\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[],\"elapsed\":0,\"mediaId\":\"999900001:2015-05-31T21:00:00-0400|short\",\"duration\":179,\"origin\":\"HRNC\",\"rating\":\"START\",\"channel\":\"npr\",\"cohort\":\"Z\"}]");
 		assertEquals(expectedElement, requestElement);
 		
 		// First complete, start second
@@ -133,8 +132,8 @@ public class SonosServiceTest {
 		response = service.reportPlaySeconds("410837082:410837083", 0, null, null, null);
 		assertEquals(0, response.getInterval());
 	    
-		requestElement = parser.parse(server.getRequestBody());
-		expectedElement = parser.parse("[{\"mediaId\":\"999900001:2015-05-31T21:00:00-0400|short\",\"origin\":\"HRNC\",\"rating\":\"COMPLETED\",\"elapsed\":19,\"duration\":179,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"410837082:410837083\",\"origin\":\"LEAD\",\"rating\":\"START\",\"elapsed\":0,\"duration\":261,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"}]");
+		requestElement = JsonParser.parseString(server.getRequestBody());
+		expectedElement = JsonParser.parseString("[{\"mediaId\":\"999900001:2015-05-31T21:00:00-0400|short\",\"origin\":\"HRNC\",\"rating\":\"COMPLETED\",\"elapsed\":19,\"duration\":179,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"410837082:410837083\",\"origin\":\"LEAD\",\"rating\":\"START\",\"elapsed\":0,\"duration\":261,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"}]");
 		assertEquals(expectedElement, requestElement);
 		
 		// Skip second, Start third
@@ -145,8 +144,8 @@ public class SonosServiceTest {
 		response = service.reportPlaySeconds("411044416:411044417", 0, null, null, null);
 		assertEquals(0, response.getInterval());
 	    
-		requestElement = parser.parse(server.getRequestBody());
-		expectedElement = parser.parse("[{\"mediaId\":\"410837082:410837083\",\"origin\":\"LEAD\",\"rating\":\"SKIP\",\"elapsed\":0,\"duration\":261,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"411044416:411044417\",\"origin\":\"BREAK\",\"rating\":\"START\",\"elapsed\":0,\"duration\":116,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"}]");
+		requestElement = JsonParser.parseString(server.getRequestBody());
+		expectedElement = JsonParser.parseString("[{\"mediaId\":\"410837082:410837083\",\"origin\":\"LEAD\",\"rating\":\"SKIP\",\"elapsed\":0,\"duration\":261,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"411044416:411044417\",\"origin\":\"BREAK\",\"rating\":\"START\",\"elapsed\":0,\"duration\":116,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"}]");
 		assertEquals(expectedElement, requestElement);
 		
 		// Thumbup third, Skip third, start fourth
@@ -158,8 +157,8 @@ public class SonosServiceTest {
 		response = service.reportPlaySeconds("410424889:410779035", 0, null, null, null);
 		assertEquals(0, response.getInterval());
 		
-		requestElement = parser.parse(server.getRequestBody());
-		expectedElement = parser.parse("[{\"mediaId\":\"411044416:411044417\",\"origin\":\"BREAK\",\"rating\":\"SKIP\",\"elapsed\":0,\"duration\":116,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"411044416:411044417\",\"origin\":\"BREAK\",\"rating\":\"THUMBUP\",\"elapsed\":0,\"duration\":116,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"410424889:410779035\",\"origin\":\"ORGZN\",\"rating\":\"START\",\"elapsed\":0,\"duration\":118,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[],\"channel\":\"npr\",\"cohort\":\"Z\"}]");
+		requestElement = JsonParser.parseString(server.getRequestBody());
+		expectedElement = JsonParser.parseString("[{\"mediaId\":\"411044416:411044417\",\"origin\":\"BREAK\",\"rating\":\"SKIP\",\"elapsed\":0,\"duration\":116,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"411044416:411044417\",\"origin\":\"BREAK\",\"rating\":\"THUMBUP\",\"elapsed\":0,\"duration\":116,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[\"2\"],\"channel\":\"npr\",\"cohort\":\"Z\"},{\"mediaId\":\"410424889:410779035\",\"origin\":\"ORGZN\",\"rating\":\"START\",\"elapsed\":0,\"duration\":118,\"timestamp\":\"2015-05-31T22:10:13-0400\",\"affiliations\":[],\"channel\":\"npr\",\"cohort\":\"Z\"}]");
 		assertEquals(expectedElement, requestElement);		
 	}
 

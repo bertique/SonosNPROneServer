@@ -17,6 +17,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -37,8 +38,6 @@ import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.jaxws.context.WrappedMessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.log4j.Logger;
-import org.eclipse.jetty.server.session.HouseKeeper;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 
@@ -449,12 +448,13 @@ public class SonosService implements SonosSoap {
 			throwSoapFault(LOGIN_INVALID);
 		} catch (BadRequestException e) {
 			logger.error("Bad request: "+e.getMessage());
-			logger.error(e.getResponse().readEntity(String.class));
+			try (Response r = e.getResponse()) {
+				logger.error(r.readEntity(String.class));
+			}
 			throwSoapFault(SERVICE_UNKNOWN_ERROR);
 		}
-		
-		JsonParser parser = new JsonParser();
-        JsonElement element = parser.parse(json);
+				
+        JsonElement element = JsonParser.parseString(json);
         String verification_uri = "";
         String user_code = "";
         String device_code = "";
@@ -502,15 +502,16 @@ public class SonosService implements SonosSoap {
 		} catch (NotAuthorizedException e) {
 			logger.info(householdId.hashCode() +": Not linked retry");
 			logger.debug(householdId.hashCode() +": "+e.getMessage());
-			logger.debug(householdId.hashCode() +": Detailed response: "+e.getResponse().readEntity(String.class));
+			try (Response r = e.getResponse()) {
+				logger.debug(householdId.hashCode() +": Detailed response: "+r.readEntity(String.class));
+			}
 			throwSoapFault(NOT_LINKED_RETRY, "NOT_LINKED_RETRY", "5");
 		} catch (BadRequestException e) {
 			logger.error("Bad request: "+e.getMessage());
 			throwSoapFault(NOT_LINKED_FAILURE, "NOT_LINKED_FAILURE", "6");
 		}
-		
-		JsonParser parser = new JsonParser();
-        JsonElement element = parser.parse(json);
+				
+        JsonElement element = JsonParser.parseString(json);
         String access_token = "";        
         if (element.isJsonObject()) {
         	JsonObject root = element.getAsJsonObject();
@@ -671,9 +672,8 @@ public class SonosService implements SonosSoap {
 	private MediaList getChannels(NprAuth auth) {
 		
 		String json = nprApiGetRequest("channels", "exploreOnly", "true", auth);
-				
-		JsonParser parser = new JsonParser();
-		JsonElement element = parser.parse(json);
+					
+		JsonElement element = JsonParser.parseString(json);
 	        
 		JsonArray mainResultList = element.getAsJsonObject().getAsJsonArray("items");			
 		
@@ -922,9 +922,8 @@ public class SonosService implements SonosSoap {
     	List<AbstractMedia> mcList = ml.getMediaCollectionOrMediaMetadata();		
 					
 		String json = nprApiGetRequest("recommendations", "channel", "npr", auth);		
-		
-		JsonParser parser = new JsonParser();
-		JsonElement element = parser.parse(json);
+				
+		JsonElement element = JsonParser.parseString(json);
 	        
 		JsonArray searchResultList = element.getAsJsonObject().getAsJsonArray("items");		
         
@@ -986,7 +985,9 @@ public class SonosService implements SonosSoap {
 			throwSoapFault(AUTH_TOKEN_EXPIRED);		
 		} catch (BadRequestException e) {
 			logger.error("Bad request: "+e.getMessage());
-			logger.error(e.getResponse().readEntity(String.class));
+			try (Response r = e.getResponse()) {
+				logger.error(r.readEntity(String.class));
+			}
 		}		
 		return json;
 	}
@@ -1001,9 +1002,8 @@ public class SonosService implements SonosSoap {
 		return parseMediaListResponse(auth.getUserId(), json);						
 	}
 
-	private static MediaList parseMediaListResponse(String userId, String json) {
-		JsonParser parser = new JsonParser();
-		JsonElement element = parser.parse(json);
+	private static MediaList parseMediaListResponse(String userId, String json) {		
+		JsonElement element = JsonParser.parseString(json);
 	        
 		JsonArray mainResultList = element.getAsJsonObject().getAsJsonArray("items");			
 		
@@ -1074,7 +1074,9 @@ public class SonosService implements SonosSoap {
 			logger.debug("login NotAuthorized: "+e.getMessage());			
 		} catch (BadRequestException e) {
 			logger.error("Bad request: "+e.getMessage());
-			logger.error(e.getResponse().readEntity(String.class));
+			try (Response r = e.getResponse()) {
+				logger.error(r.readEntity(String.class));
+			}
 		}
 		System.out.println(json);
 	}
