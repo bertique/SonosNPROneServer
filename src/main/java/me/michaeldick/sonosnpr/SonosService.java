@@ -38,6 +38,7 @@ import org.apache.cxf.jaxb.JAXBDataBinding;
 import org.apache.cxf.jaxws.context.WrappedMessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.w3c.dom.Node;
 
@@ -1218,7 +1219,13 @@ public class SonosService implements SonosSoap {
 
     }
 	
-	private void sendMetricsEvent(String userId, String eventName, JSONObject properties) {
+	private void sendMetricsEvent(String userId, String eventName, JSONObject properties) throws JSONException {
+		properties = new JSONObject("{"
+				+ "          \"properties\": {"
+				+ "               \"environment\": \"gcp\""
+				+ "          }"
+				+ "     }");
+		
 		JSONObject sentEvent = messageBuilder.event(userId, eventName, properties);
 	    
         ClientDelivery delivery = new ClientDelivery();
